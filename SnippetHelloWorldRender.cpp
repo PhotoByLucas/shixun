@@ -100,7 +100,7 @@ void exitCallback(void)
 
 void renderLoop()
 {
-	sCamera = new Snippets::Camera(PxVec3(50.0f, 50.0f, 50.0f), PxVec3(-0.6f,-0.2f,-0.7f));
+	sCamera = new Snippets::Camera(PxVec3(0.0f, 150.0f, 150.0f), PxVec3(0.0f,-5.f,-5.f));
 
 	Snippets::setupDefaultWindow("PhysX Snippet HelloWorld");
 	Snippets::setupDefaultRenderState();
@@ -109,7 +109,7 @@ void renderLoop()
 	glutDisplayFunc(renderCallback);
 	glutKeyboardFunc(keyboardCallback);
 	glutMouseFunc(mouseCallback);
-	glutMotionFunc(motionCallback);
+	//glutMotionFunc(motionCallback);
 	motionCallback(0,0);
 
 	atexit(exitCallback);

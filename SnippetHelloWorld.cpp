@@ -128,12 +128,12 @@ void initPhysics(bool interactive)
 	//ÉèÖÃÎ§Ç½
 	PxRigidStatic* groundPlane = PxCreatePlane(*gPhysics, PxPlane(0,1,0,0), *gMaterial);
 	gScene->addActor(*groundPlane);
-	PxShape* shape1 = gPhysics->createShape(PxBoxGeometry(100.0f,10.0f,1.0f), *gMaterial);
-	PxRigidStatic* southWall = PxCreateStatic(*gPhysics, PxTransform(PxVec3(0.0f, 10.0f, 100.0f)), *shape1);
-	PxRigidStatic* northWall = PxCreateStatic(*gPhysics, PxTransform(PxVec3(0.0f, 10.0f, -100.0f)), *shape1);
-	PxShape* shape2 = gPhysics->createShape(PxBoxGeometry(1.0f, 10.0f, 100.0f), *gMaterial);
-	PxRigidStatic* westWall = PxCreateStatic(*gPhysics, PxTransform(PxVec3(100.0f, 10.0f, 0.0f)), *shape2);
-	PxRigidStatic* eastWall = PxCreateStatic(*gPhysics, PxTransform(PxVec3(-100.0f, 10.0f, 0.0f)), *shape2);
+	PxShape* wallShape1 = gPhysics->createShape(PxBoxGeometry(100.0f,10.0f,1.0f), *gMaterial);
+	PxRigidStatic* southWall = PxCreateStatic(*gPhysics, PxTransform(PxVec3(0.0f, 10.0f, 100.0f)), *wallShape1);
+	PxRigidStatic* northWall = PxCreateStatic(*gPhysics, PxTransform(PxVec3(0.0f, 10.0f, -100.0f)), *wallShape1);
+	PxShape* wallShape2 = gPhysics->createShape(PxBoxGeometry(1.0f, 10.0f, 100.0f), *gMaterial);
+	PxRigidStatic* westWall = PxCreateStatic(*gPhysics, PxTransform(PxVec3(100.0f, 10.0f, 0.0f)), *wallShape2);
+	PxRigidStatic* eastWall = PxCreateStatic(*gPhysics, PxTransform(PxVec3(-100.0f, 10.0f, 0.0f)), *wallShape2);
 	gScene->addActor(*southWall);
 	gScene->addActor(*westWall);
 	gScene->addActor(*eastWall);
@@ -151,24 +151,29 @@ void initPhysics(bool interactive)
 	//ball->addForce()
 	gScene->addActor(*ball);
 	//½ºÄÒÕÏ°­
-	PxShape* shape3 = gPhysics->createShape(PxCapsuleGeometry(10.0f, 20.0f), *gMaterial);
+	PxShape* capsuleShape = gPhysics->createShape(PxCapsuleGeometry(10.0f, 20.0f), *gMaterial);
 	//PxRigidStatic* stick0 = gPhysics->createRigidStatic(PxTransform(PxVec3(10.0f, 0.0f, -70.0f)));
 	PxTransform relativePose(PxQuat(PxHalfPi, PxVec3(0, 0, 1)));
-	shape3->setLocalPose(relativePose);
-	PxRigidStatic* stick1 = PxCreateStatic(*gPhysics, PxTransform(PxVec3(0.0f, 0.0f, 10.0f)), *shape3);
+	capsuleShape->setLocalPose(relativePose);
+	PxRigidStatic* stick1 = PxCreateStatic(*gPhysics, PxTransform(PxVec3(0.0f, 0.0f, 0.0f)), *capsuleShape);
 	//stick->setRigidDynamicLockFlags(PxRigidDynamicLockFlag::eLOCK_LINEAR_Y);
 	gScene->addActor(*stick1);
-	PxRigidStatic* stick2 = PxCreateStatic(*gPhysics, PxTransform(PxVec3(0.0f, 0.0f, 50.0f)), *shape3);
+	PxRigidStatic* stick2 = PxCreateStatic(*gPhysics, PxTransform(PxVec3(0.0f, 0.0f, 50.0f)), *capsuleShape);
 	//stick->setRigidDynamicLockFlags(PxRigidDynamicLockFlag::eLOCK_LINEAR_Y);
 	gScene->addActor(*stick2);
-	PxRigidStatic* stick3 = PxCreateStatic(*gPhysics, PxTransform(PxVec3(0.0f, 0.0f, -50.0f)), *shape3);
+	PxRigidStatic* stick3 = PxCreateStatic(*gPhysics, PxTransform(PxVec3(0.0f, 0.0f, -50.0f)), *capsuleShape);
 	//stick->setRigidDynamicLockFlags(PxRigidDynamicLockFlag::eLOCK_LINEAR_Y);
 	gScene->addActor(*stick3);
-	PxShape* shape4 = gPhysics->createShape(PxBoxGeometry(10.0f, 10.0f, 10.0f), *gMaterial);
-	PxRigidStatic* box = PxCreateStatic(*gPhysics, PxTransform(PxVec3(50.0f, 20.0f, 50.0f)), *shape4);
+	PxShape* boxShape = gPhysics->createShape(PxBoxGeometry(10.0f, 10.0f, 10.0f), *gMaterial);
+	PxRigidStatic* box = PxCreateStatic(*gPhysics, PxTransform(PxVec3(50.0f, 10.0f, 50.0f)), *boxShape);
 	gScene->addActor(*box);
+	PxRigidStatic* box1 = PxCreateStatic(*gPhysics, PxTransform(PxVec3(-50.0f, 10.0f, 50.0f)), *boxShape);
+	gScene->addActor(*box1);
+
+	//PxShape* triShape = gPhysics->createShape(PxTriangleGeometry(10.0f,10.f,10.0f),*gMaterial);
+	//PxRigidStatic* tri1 = PxCreateStatic(*gPhysics, PxTransform(PxVec3(0.0f, 0.0f, 0.0f)), *triShape);
 	//for(PxU32 i=0;i<5;i++)
-		//createStack(PxTransform(PxVec3(0,0,stackZ-=10.0f)), 10, 2.0f);
+	//createStack(PxTransform(PxVec3(0,0,stackZ-=10.0f)), 10, 2.0f);
 
 
 
