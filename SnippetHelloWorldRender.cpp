@@ -109,7 +109,7 @@ void renderLoop()
 	glutDisplayFunc(renderCallback);
 	glutKeyboardFunc(keyboardCallback);
 	glutMouseFunc(mouseCallback);
-	//glutMotionFunc(motionCallback);
+	glutMotionFunc(motionCallback);
 	motionCallback(0,0);
 
 	atexit(exitCallback);

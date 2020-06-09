@@ -1,5 +1,4 @@
 
-// 1234 
 
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions
@@ -111,7 +110,7 @@ void initPhysics(bool interactive)
 	gPhysics = PxCreatePhysics(PX_PHYSICS_VERSION, *gFoundation, PxTolerancesScale(),true,gPvd);
 
 	PxSceneDesc sceneDesc(gPhysics->getTolerancesScale());
-	sceneDesc.gravity = PxVec3(0.0f, -9.81f, 0.0f);
+	sceneDesc.gravity = PxVec3(0.0f, -9.81f, 5.0f);
 	gDispatcher = PxDefaultCpuDispatcherCreate(2);
 	sceneDesc.cpuDispatcher	= gDispatcher;
 	sceneDesc.filterShader	= PxDefaultSimulationFilterShader;
@@ -124,19 +123,19 @@ void initPhysics(bool interactive)
 		pvdClient->setScenePvdFlag(PxPvdSceneFlag::eTRANSMIT_CONTACTS, true);
 		pvdClient->setScenePvdFlag(PxPvdSceneFlag::eTRANSMIT_SCENEQUERIES, true);
 	}
-	gMaterial = gPhysics->createMaterial(0.5f, 0.5f, 1.0f);
+	gMaterial = gPhysics->createMaterial(0.5f, 0.5f, 0.98f);
 
 
 	//ÉèÖÃÎ§Ç½
 	PxRigidStatic* groundPlane = PxCreatePlane(*gPhysics, PxPlane(0,1,0,0), *gMaterial);
 	gScene->addActor(*groundPlane);
 	PxShape* wallShape1 = gPhysics->createShape(PxBoxGeometry(100.0f,10.0f,1.0f), *gMaterial);
-	PxRigidStatic* southWall = PxCreateStatic(*gPhysics, PxTransform(PxVec3(0.0f, 10.0f, 100.0f)), *wallShape1);
-	PxRigidStatic* northWall = PxCreateStatic(*gPhysics, PxTransform(PxVec3(0.0f, 10.0f, -100.0f)), *wallShape1);
-	PxShape* wallShape2 = gPhysics->createShape(PxBoxGeometry(1.0f, 10.0f, 100.0f), *gMaterial);
-	PxRigidStatic* westWall = PxCreateStatic(*gPhysics, PxTransform(PxVec3(100.0f, 10.0f, 0.0f)), *wallShape2);
-	PxRigidStatic* eastWall = PxCreateStatic(*gPhysics, PxTransform(PxVec3(-100.0f, 10.0f, 0.0f)), *wallShape2);
-	gScene->addActor(*southWall);
+	//PxRigidStatic* southWall = PxCreateStatic(*gPhysics, PxTransform(PxVec3(0.0f, 10.0f, 100.0f)), *wallShape1);
+	PxRigidStatic* northWall = PxCreateStatic(*gPhysics, PxTransform(PxVec3(0.0f, 10.0f, -200.0f)), *wallShape1);
+	PxShape* wallShape2 = gPhysics->createShape(PxBoxGeometry(1.0f, 10.0f, 200.0f), *gMaterial);
+	PxRigidStatic* westWall = PxCreateStatic(*gPhysics, PxTransform(PxVec3(100.0f, 10.0f, -100.0f)), *wallShape2);
+	PxRigidStatic* eastWall = PxCreateStatic(*gPhysics, PxTransform(PxVec3(-100.0f, 10.0f, -100.0f)), *wallShape2);
+	//gScene->addActor(*southWall);
 	gScene->addActor(*westWall);
 	gScene->addActor(*eastWall);
 	gScene->addActor(*northWall);
@@ -148,7 +147,7 @@ void initPhysics(bool interactive)
 
 
 	//Éú³ÉÇò
-	PxRigidDynamic* ball = createDynamic(PxTransform(PxVec3(40.0f, 10.0f, 0.0f)), PxSphereGeometry(10.0f), PxVec3(0.0f, 0.0f, 0.0f));
+	PxRigidDynamic* ball = createDynamic(PxTransform(PxVec3(40.0f, 10.0f, 0.0f)), PxSphereGeometry(8.0f), PxVec3(0.0f, 0.0f, 0.0f));
 	ball->setRigidDynamicLockFlags( PxRigidDynamicLockFlag::eLOCK_LINEAR_Y);
 	//ball->addForce()
 	gScene->addActor(*ball);
@@ -157,6 +156,20 @@ void initPhysics(bool interactive)
 	//PxRigidStatic* stick0 = gPhysics->createRigidStatic(PxTransform(PxVec3(10.0f, 0.0f, -70.0f)));
 	PxTransform relativePose(PxQuat(PxHalfPi, PxVec3(0, 0, 1)));
 	capsuleShape->setLocalPose(relativePose);
+
+	PxShape* leftHandWall = gPhysics->createShape(PxBoxGeometry(90.0f, 10.0f, 1.0f), *gMaterial);
+	PxTransform relativePose1(PxQuat(PxHalfPi*0.6, PxVec3(0, 1, 0)));
+	leftHandWall->setLocalPose(relativePose1);
+	PxRigidStatic* stick4 = PxCreateStatic(*gPhysics, PxTransform(PxVec3(50.0f, 10.0f, 120.0f)), *leftHandWall);
+	gScene->addActor(*stick4);
+
+	PxShape* rightHandWall = gPhysics->createShape(PxBoxGeometry(90.0f, 10.0f, 1.0f), *gMaterial);
+	PxTransform relativePose2(PxQuat(-0.6*PxHalfPi, PxVec3(0, 1, 0)));
+	rightHandWall->setLocalPose(relativePose2);
+	PxRigidStatic* stick5 = PxCreateStatic(*gPhysics, PxTransform(PxVec3(-50.0f, 10.0f, 120.0f)), *rightHandWall);
+	gScene->addActor(*stick5);
+	//stick->setRigidDynamicLockFlags(PxRigidDynamicLockFlag::eLOCK_LINEAR_Y);
+	
 	PxRigidStatic* stick1 = PxCreateStatic(*gPhysics, PxTransform(PxVec3(0.0f, 0.0f, 0.0f)), *capsuleShape);
 	//stick->setRigidDynamicLockFlags(PxRigidDynamicLockFlag::eLOCK_LINEAR_Y);
 	gScene->addActor(*stick1);
