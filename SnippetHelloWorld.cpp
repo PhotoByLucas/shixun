@@ -59,7 +59,7 @@ PxMaterial*				gMaterial	= NULL;
 
 PxPvd*                  gPvd        = NULL;
 
-
+PxRigidDynamic* dynamicBall = NULL;
 PxRigidStatic* plane;
 
 
@@ -91,12 +91,27 @@ PxJoint* createMyJoint(PxRigidActor* a0, const PxTransform& t0, PxRigidActor* a1
 	j->setConstraintFlag(PxConstraintFlag::ePROJECTION, true);
 	return j;
 }
-PxJoint* createDampedD6(PxRigidActor* a0, const PxTransform& t0, PxRigidActor* a1, const PxTransform& t1)
+PxJoint* createDampedD61(PxRigidActor* a0, const PxTransform& t0, PxRigidActor* a1, const PxTransform& t1)
 {
 	PxD6Joint* j = PxD6JointCreate(*gPhysics, a0, t0, a1, t1);
-	j->setMotion(PxD6Axis::eSWING1, PxD6Motion::eFREE);
+	j->setMotion(PxD6Axis::eSWING1, PxD6Motion::eLIMITED);
 	//j->setMotion(PxD6Axis::eSWING2, PxD6Motion::eFREE);
 	//j->setMotion(PxD6Axis::eTWIST, PxD6Motion::eFREE);
+	//j->setLinearLimit(PxJointLinearLimit(1.0f, 0.1f));
+	j->setSwingLimit(PxJointLimitCone(PxPi/6, 0, 1.0f));
+	j->setProjectionLinearTolerance(0.1f);
+	j->setConstraintFlag(PxConstraintFlag::ePROJECTION, true);
+	j->setDrive(PxD6Drive::eSLERP, PxD6JointDrive(0, 1000, FLT_MAX, true));
+	return j;
+}
+PxJoint* createDampedD62(PxRigidActor* a0, const PxTransform& t0, PxRigidActor* a1, const PxTransform& t1)
+{
+	PxD6Joint* j = PxD6JointCreate(*gPhysics, a0, t0, a1, t1);
+	j->setMotion(PxD6Axis::eSWING1, PxD6Motion::eLIMITED);
+	//j->setMotion(PxD6Axis::eSWING2, PxD6Motion::eFREE);
+	//j->setMotion(PxD6Axis::eTWIST, PxD6Motion::eFREE);
+	//j->setLinearLimit(PxJointLinearLimit(1.0f, 0.1f));
+	j->setSwingLimit(PxJointLimitCone(PxPi/6, PxPi/6, 1.0f));
 	j->setProjectionLinearTolerance(0.1f);
 	j->setConstraintFlag(PxConstraintFlag::ePROJECTION, true);
 	j->setDrive(PxD6Drive::eSLERP, PxD6JointDrive(0, 1000, FLT_MAX, true));
@@ -123,15 +138,16 @@ void createChain(const PxTransform& t, PxU32 length, const PxGeometry& g, PxReal
 PxRigidDynamic* createBall(const PxTransform& t, const PxGeometry& geometry, const PxVec3& velocity = PxVec3(100))
 {
 
-	PxRigidDynamic* dynamic = PxCreateDynamic(*gPhysics, t, geometry, *gMaterial, 10.0f);
-	dynamic->setAngularDamping(0.5f);
-	dynamic->setLinearVelocity(velocity);
-	dynamic->setRigidDynamicLockFlags(PxRigidDynamicLockFlag::eLOCK_LINEAR_Y);
+	dynamicBall = PxCreateDynamic(*gPhysics, t, geometry, *gMaterial, 10.0f);
+	dynamicBall->setAngularDamping(0.5f);
+	dynamicBall->setLinearVelocity(velocity);
+	dynamicBall->setRigidDynamicLockFlags(PxRigidDynamicLockFlag::eLOCK_LINEAR_Y);
+	//dynamic->addForce(PxVec3(1, 0, 0),physx::PxForceMode::eFORCE , true);
 	//dynamic->setAngularVelocity(velocity);
-	gScene->addActor(*dynamic);
+	gScene->addActor(*dynamicBall);
 
 
-	return dynamic;
+	return dynamicBall;
 }
 
 void createStack(const PxTransform& t, PxU32 size, PxReal halfExtent)
@@ -165,7 +181,7 @@ void initPhysics(bool interactive)
 	gPhysics = PxCreatePhysics(PX_PHYSICS_VERSION, *gFoundation, PxTolerancesScale(),true,gPvd);
 
 	PxSceneDesc sceneDesc(gPhysics->getTolerancesScale());
-	sceneDesc.gravity = PxVec3(0.0f, -9.81f, 5.0f);
+	sceneDesc.gravity = PxVec3(0.0f, -9.81f, 1.0f);
 	gDispatcher = PxDefaultCpuDispatcherCreate(2);
 	sceneDesc.cpuDispatcher	= gDispatcher;
 	sceneDesc.filterShader	= PxDefaultSimulationFilterShader;
@@ -250,21 +266,46 @@ void initPhysics(bool interactive)
 	
 	
 	//下方右边的阻隔
-	PxShape* rightHandWall = gPhysics->createShape(PxBoxGeometry(50.0f, 10.0f, 1.0f), *gMaterial);
+	//PxShape* rightHandWall = gPhysics->createShape(PxBoxGeometry(50.0f, 10.0f, 1.0f), *gMaterial);
 	PxTransform relativePose1(PxQuat(PxHalfPi*0.33, PxVec3(0, 1, 0)));
-	rightHandWall->setLocalPose(relativePose1);
-	PxRigidStatic* stick4 = PxCreateStatic(*gPhysics, PxTransform(PxVec3(45.0f, 10.0f, 120.0f)), *rightHandWall);
-	gScene->addActor(*stick4);
-	//尝试用关节实现摆臂
-	createChain(PxTransform(PxVec3(90.0f, 30.0f, 95.0f)), 2, PxBoxGeometry(25.0f, 10.0f, 1.0f), 49.0f, createDampedD6);
+	//rightHandWall->setLocalPose(relativePose1);
+	//PxRigidStatic* stick4 = PxCreateStatic(*gPhysics, PxTransform(PxVec3(45.0f, 10.0f, 120.0f)), *rightHandWall);
+	//gScene->addActor(*stick4);
 	
+	
+	//createChain(PxTransform(PxVec3(90.0f, 30.0f, 95.0f)), 2, PxBoxGeometry(25.0f, 10.0f, 1.0f), 49.0f, createDampedD6);
+	PxVec3 offset(20.0f, 0, 0);
+	PxTransform localTm(offset);
+	//尝试用关节实现摆臂
+	PxShape* rightHandWall1 = gPhysics->createShape(PxBoxGeometry(35.0f, 10.0f, 1.0f), *gMaterial);
+	//PxTransform relativePose1(PxQuat(PxHalfPi*0.33, PxVec3(0, 1, 0)));
+	rightHandWall1->setLocalPose(relativePose1);
+	PxRigidStatic* rightStaticStick = PxCreateStatic(*gPhysics, PxTransform(PxVec3(60.0f, 10.0f, 110.0f)), *rightHandWall1);
+	PxRigidDynamic* current = PxCreateDynamic(*gPhysics, PxTransform(PxVec3(90.0f, 30.0f, 95.0f))*localTm, PxBoxGeometry(16.0f, 10.0f, 1.0f), *gMaterial, 1.0f);
+	(*createDampedD62)(rightStaticStick, PxTransform(PxVec3(-28.0f, 0.0f, 16.5f)), current, PxTransform(offset));
+	gScene->addActor(*rightStaticStick);
+	gScene->addActor(*current);
+	
+
 	//下方左边的阻隔
-	PxShape* leftHandWall = gPhysics->createShape(PxBoxGeometry(50.0f, 10.0f, 1.0f), *gMaterial);
+	//PxShape* leftHandWall = gPhysics->createShape(PxBoxGeometry(50.0f, 10.0f, 1.0f), *gMaterial);
 	PxTransform relativePose2(PxQuat(-0.33*PxHalfPi, PxVec3(0, 1, 0)));
-	leftHandWall->setLocalPose(relativePose2);
-	PxRigidStatic* stick5 = PxCreateStatic(*gPhysics, PxTransform(PxVec3(-55.0f, 10.0f, 120.0f)), *leftHandWall);
-	gScene->addActor(*stick5);
+	//leftHandWall->setLocalPose(relativePose2);
+	//PxRigidStatic* stick5 = PxCreateStatic(*gPhysics, PxTransform(PxVec3(-55.0f, 10.0f, 120.0f)), *leftHandWall);
+	//gScene->addActor(*stick5);
 	//stick->setRigidDynamicLockFlags(PxRigidDynamicLockFlag::eLOCK_LINEAR_Y);
+
+
+	//尝试用关节实现摆臂
+	PxShape* leftHandWall1 = gPhysics->createShape(PxBoxGeometry(35.0f, 10.0f, 1.0f), *gMaterial);
+	//PxTransform relativePose1(PxQuat(PxHalfPi*0.33, PxVec3(0, 1, 0)));
+	leftHandWall1->setLocalPose(relativePose2);
+	PxRigidStatic* leftStaticStick = PxCreateStatic(*gPhysics, PxTransform(PxVec3(-70.0f, 10.0f, 110.0f)), *leftHandWall1);
+	PxRigidDynamic* current1 = PxCreateDynamic(*gPhysics, PxTransform(PxVec3(90.0f, 30.0f, 95.0f))*localTm, PxBoxGeometry(16.0f, 10.0f, 1.0f), *gMaterial, 1.0f);
+	(*createDampedD61)(leftStaticStick, PxTransform(PxVec3(28.0f, 0.0f, 16.5f)), current1, PxTransform(-offset));
+	gScene->addActor(*leftStaticStick);
+	gScene->addActor(*current1);
+
 
 	//上方左边的阻隔
 	PxShape* TopLeftWall = gPhysics->createShape(PxBoxGeometry(55.0f, 10.0f, 1.0f), *gMaterial);
@@ -307,6 +348,7 @@ void stepPhysics(bool interactive)
 	gScene->simulate(1.0f/60.0f);
 	gScene->fetchResults(true);
 	//到达指定区域之后gScene->removeActor()小球
+	//if()
 	
 }
 	
