@@ -39,9 +39,15 @@
 
 #include "PxPhysicsAPI.h"
 
+#include "foundation/PxMemory.h"
+
+
 #include "../SnippetCommon/SnippetPrint.h"
 #include "../SnippetCommon/SnippetPVD.h"
 #include "../SnippetUtils/SnippetUtils.h"
+#include "PsArray.h"
+#include "PxImmediateMode.h"
+#include "extensions/PxMassProperties.h"
 
 
 using namespace physx;
@@ -61,7 +67,7 @@ PxPvd*                  gPvd        = NULL;
 
 PxRigidDynamic* dynamicBall = NULL;
 PxRigidStatic* plane;
-
+bool					gUseBinarySerialization = false;
 
 PxReal stackZ = 10.0f;
 
@@ -150,6 +156,8 @@ PxRigidDynamic* createBall(const PxTransform& t, const PxGeometry& geometry, con
 	return dynamicBall;
 }
 
+
+
 void createStack(const PxTransform& t, PxU32 size, PxReal halfExtent)
 {
 	PxShape* shape = gPhysics->createShape(PxBoxGeometry(halfExtent, halfExtent, halfExtent), *gMaterial);
@@ -200,20 +208,20 @@ void initPhysics(bool interactive)
 	//设置围墙
 	PxRigidStatic* groundPlane = PxCreatePlane(*gPhysics, PxPlane(0,1,0,0), *gMaterial);
 	gScene->addActor(*groundPlane);
-	PxShape* wallShape1 = gPhysics->createShape(PxBoxGeometry(100.0f,10.0f,1.0f), *gMaterial);
-	PxRigidStatic* southWall = PxCreateStatic(*gPhysics, PxTransform(PxVec3(0.0f, 10.0f, 200.0f)), *wallShape1);
-	PxRigidStatic* northWall = PxCreateStatic(*gPhysics, PxTransform(PxVec3(0.0f, 10.0f, -200.0f)), *wallShape1);
-	PxShape* wallShape2 = gPhysics->createShape(PxBoxGeometry(1.0f, 10.0f, 200.0f), *gMaterial);
-	PxRigidStatic* eastWall = PxCreateStatic(*gPhysics, PxTransform(PxVec3(100.0f, 10.0f, 0.0f)), *wallShape2);
-	PxRigidStatic* westWall = PxCreateStatic(*gPhysics, PxTransform(PxVec3(-100.0f, 10.0f, 0.0f)), *wallShape2);
+	PxShape* wallShape1 = gPhysics->createShape(PxBoxGeometry(100.0f,5.0f,1.5f), *gMaterial);
+	PxRigidStatic* southWall = PxCreateStatic(*gPhysics, PxTransform(PxVec3(0.0f, 5.0f, 200.0f)), *wallShape1);
+	PxRigidStatic* northWall = PxCreateStatic(*gPhysics, PxTransform(PxVec3(0.0f, 5.0f, -200.0f)), *wallShape1);
+	PxShape* wallShape2 = gPhysics->createShape(PxBoxGeometry(1.5f, 5.0f, 200.0f), *gMaterial);
+	PxRigidStatic* eastWall = PxCreateStatic(*gPhysics, PxTransform(PxVec3(100.0f, 5.0f, 0.0f)), *wallShape2);
+	PxRigidStatic* westWall = PxCreateStatic(*gPhysics, PxTransform(PxVec3(-100.0f, 5.0f, 0.0f)), *wallShape2);
 	gScene->addActor(*southWall);
 	gScene->addActor(*westWall);
 	gScene->addActor(*eastWall);
 	gScene->addActor(*northWall);
 
 	//小墙作阻隔
-	PxShape* wallShape3 = gPhysics->createShape(PxBoxGeometry(1.0f, 10.0f, 160.0f), *gMaterial);
-	PxRigidStatic* smallWall = PxCreateStatic(*gPhysics, PxTransform(PxVec3(90.0f, 10.0f, 40.0f)), *wallShape3);
+	PxShape* wallShape3 = gPhysics->createShape(PxBoxGeometry(1.0f, 5.0f, 160.0f), *gMaterial);
+	PxRigidStatic* smallWall = PxCreateStatic(*gPhysics, PxTransform(PxVec3(90.0f, 5.0f, 40.0f)), *wallShape3);
 	gScene->addActor(*smallWall);
 
 	//PxShape* shape4 = gPhysics->createShape(PxBoxGeometry(1.0f, 10.0f, 100.0f), *gMaterial);
@@ -227,12 +235,27 @@ void initPhysics(bool interactive)
 	//ball->setRigidDynamicLockFlags( PxRigidDynamicLockFlag::eLOCK_LINEAR_Y);
 	//gScene->addActor(*ball);
 
+		//上方左边的阻隔
+	PxShape* TopLeftWall = gPhysics->createShape(PxBoxGeometry(55.0f, 5.0f, 2.5f), *gMaterial);
+	PxTransform relativePose3(PxQuat(PxHalfPi*0.33, PxVec3(0, 1, 0)));
+	TopLeftWall->setLocalPose(relativePose3);
+	PxRigidStatic* stick6 = PxCreateStatic(*gPhysics, PxTransform(PxVec3(-52.5f, 5.0f, -175.0f)), *TopLeftWall);
+	gScene->addActor(*stick6);
+
+	//上方右边的阻隔
+	PxShape* TopRightWall = gPhysics->createShape(PxBoxGeometry(50.0f, 5.0f, 2.5f), *gMaterial);
+	PxTransform relativePose4(PxQuat(-0.33*PxHalfPi, PxVec3(0, 1, 0)));
+	TopRightWall->setLocalPose(relativePose4);
+	PxRigidStatic* stick7 = PxCreateStatic(*gPhysics, PxTransform(PxVec3(55.0f, 5.0f, -175.0f)), *TopRightWall);
+	gScene->addActor(*stick7);
+
 	//胶囊障碍
 	PxShape* capsuleShape = gPhysics->createShape(PxCapsuleGeometry(10.0f, 20.0f), *gMaterial);
 	//PxRigidStatic* stick0 = gPhysics->createRigidStatic(PxTransform(PxVec3(10.0f, 0.0f, -70.0f)));
 	PxTransform relativePose(PxQuat(PxHalfPi, PxVec3(0, 0, 1)));
 	capsuleShape->setLocalPose(relativePose);
 
+	//其他障碍
 	PxRigidStatic* stick1 = PxCreateStatic(*gPhysics, PxTransform(PxVec3(0.0f, 0.0f, 0.0f)), *capsuleShape);
 	//stick->setRigidDynamicLockFlags(PxRigidDynamicLockFlag::eLOCK_LINEAR_Y);
 	gScene->addActor(*stick1);
@@ -271,17 +294,16 @@ void initPhysics(bool interactive)
 	//rightHandWall->setLocalPose(relativePose1);
 	//PxRigidStatic* stick4 = PxCreateStatic(*gPhysics, PxTransform(PxVec3(45.0f, 10.0f, 120.0f)), *rightHandWall);
 	//gScene->addActor(*stick4);
-	
-	
 	//createChain(PxTransform(PxVec3(90.0f, 30.0f, 95.0f)), 2, PxBoxGeometry(25.0f, 10.0f, 1.0f), 49.0f, createDampedD6);
 	PxVec3 offset(20.0f, 0, 0);
 	PxTransform localTm(offset);
-	//尝试用关节实现摆臂
-	PxShape* rightHandWall1 = gPhysics->createShape(PxBoxGeometry(35.0f, 10.0f, 1.0f), *gMaterial);
+
+	//尝试用关节实现右边摆臂
+	PxShape* rightHandWall1 = gPhysics->createShape(PxBoxGeometry(35.0f, 5.0f, 2.5f), *gMaterial);
 	//PxTransform relativePose1(PxQuat(PxHalfPi*0.33, PxVec3(0, 1, 0)));
 	rightHandWall1->setLocalPose(relativePose1);
-	PxRigidStatic* rightStaticStick = PxCreateStatic(*gPhysics, PxTransform(PxVec3(60.0f, 10.0f, 110.0f)), *rightHandWall1);
-	PxRigidDynamic* current = PxCreateDynamic(*gPhysics, PxTransform(PxVec3(90.0f, 30.0f, 95.0f))*localTm, PxBoxGeometry(16.0f, 10.0f, 1.0f), *gMaterial, 1.0f);
+	PxRigidStatic* rightStaticStick = PxCreateStatic(*gPhysics, PxTransform(PxVec3(58.0f, 5.0f, 125.0f)), *rightHandWall1);
+	PxRigidDynamic* current = PxCreateDynamic(*gPhysics, PxTransform(PxVec3(90.0f, 30.0f, 95.0f))*localTm, PxBoxGeometry(16.0f, 5.0f, 1.5f), *gMaterial, 1.0f);
 	(*createDampedD62)(rightStaticStick, PxTransform(PxVec3(-28.0f, 0.0f, 16.5f)), current, PxTransform(offset));
 	gScene->addActor(*rightStaticStick);
 	gScene->addActor(*current);
@@ -296,30 +318,15 @@ void initPhysics(bool interactive)
 	//stick->setRigidDynamicLockFlags(PxRigidDynamicLockFlag::eLOCK_LINEAR_Y);
 
 
-	//尝试用关节实现摆臂
-	PxShape* leftHandWall1 = gPhysics->createShape(PxBoxGeometry(35.0f, 10.0f, 1.0f), *gMaterial);
+	//尝试用关节实现左边摆臂
+	PxShape* leftHandWall1 = gPhysics->createShape(PxBoxGeometry(35.0f, 5.0f, 2.5f), *gMaterial);
 	//PxTransform relativePose1(PxQuat(PxHalfPi*0.33, PxVec3(0, 1, 0)));
 	leftHandWall1->setLocalPose(relativePose2);
-	PxRigidStatic* leftStaticStick = PxCreateStatic(*gPhysics, PxTransform(PxVec3(-70.0f, 10.0f, 110.0f)), *leftHandWall1);
-	PxRigidDynamic* current1 = PxCreateDynamic(*gPhysics, PxTransform(PxVec3(90.0f, 30.0f, 95.0f))*localTm, PxBoxGeometry(16.0f, 10.0f, 1.0f), *gMaterial, 1.0f);
+	PxRigidStatic* leftStaticStick = PxCreateStatic(*gPhysics, PxTransform(PxVec3(-68.0f, 5.0f, 125.0f)), *leftHandWall1);
+	PxRigidDynamic* current1 = PxCreateDynamic(*gPhysics, PxTransform(PxVec3(90.0f, 30.0f, 95.0f))*localTm, PxBoxGeometry(16.0f, 5.0f, 1.5f), *gMaterial, 1.0f);
 	(*createDampedD61)(leftStaticStick, PxTransform(PxVec3(28.0f, 0.0f, 16.5f)), current1, PxTransform(-offset));
 	gScene->addActor(*leftStaticStick);
 	gScene->addActor(*current1);
-
-
-	//上方左边的阻隔
-	PxShape* TopLeftWall = gPhysics->createShape(PxBoxGeometry(55.0f, 10.0f, 1.0f), *gMaterial);
-	PxTransform relativePose3(PxQuat(PxHalfPi*0.33, PxVec3(0, 1, 0)));
-	TopLeftWall->setLocalPose(relativePose3);
-	PxRigidStatic* stick6 = PxCreateStatic(*gPhysics, PxTransform(PxVec3(-52.5f, 10.0f, -175.0f)), *TopLeftWall);
-	gScene->addActor(*stick6);
-
-	//上方右边的阻隔
-	PxShape* TopRightWall = gPhysics->createShape(PxBoxGeometry(50.0f, 10.0f, 1.0f), *gMaterial);
-	PxTransform relativePose4(PxQuat(-0.33*PxHalfPi, PxVec3(0, 1, 0)));
-	TopRightWall->setLocalPose(relativePose4);
-	PxRigidStatic* stick7 = PxCreateStatic(*gPhysics, PxTransform(PxVec3(55.0f, 10.0f, -175.0f)), *TopRightWall);
-	gScene->addActor(*stick7);
 
 
 
@@ -330,11 +337,11 @@ void initPhysics(bool interactive)
 	//for(PxU32 i=0;i<5;i++)
 	//createStack(PxTransform(PxVec3(0,0,stackZ-=10.0f)), 10, 2.0f);
 
-
-
 	//发射小球
 	if(!interactive)
 		createDynamic(PxTransform(PxVec3(0,40,100)), PxSphereGeometry(10), PxVec3(0,0,0.1f));
+
+
 }
 
 //地图初始化
@@ -373,7 +380,7 @@ void keyPress(unsigned char key, const PxTransform& camera)
 	{
 	case 'B':	createStack(PxTransform(PxVec3(0,0,stackZ-=10.0f)), 10, 2.0f);						break;
 	case ' ':	createDynamic(camera, PxSphereGeometry(4.0f), camera.rotate(PxVec3(0,0,-1))*200);	break;
-	case 'T':	createBall(PxTransform(PxVec3(95.0f, 2.0f, 184.0f)), PxSphereGeometry(4.0f), PxVec3(0, 0, -100));	break;
+	case 'T':	createBall(PxTransform(PxVec3(95.0f, 2.0f, 184.0f)), PxSphereGeometry(3.55f), PxVec3(0, 0, -100));	break;
 	case 'Q':;//左摆臂
 	case 'E':;//右摆臂
 

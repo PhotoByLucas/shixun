@@ -78,6 +78,7 @@ void renderCallback()
 
 	Snippets::startRender(sCamera->getEye(), sCamera->getDir());
 
+
 	PxScene* scene;
 	PxGetPhysics().getScenes(&scene,1);
 	PxU32 nbActors = scene->getNbActors(PxActorTypeFlag::eRIGID_DYNAMIC | PxActorTypeFlag::eRIGID_STATIC);
@@ -85,7 +86,15 @@ void renderCallback()
 	{
 		std::vector<PxRigidActor*> actors(nbActors);
 		scene->getActors(PxActorTypeFlag::eRIGID_DYNAMIC | PxActorTypeFlag::eRIGID_STATIC, reinterpret_cast<PxActor**>(&actors[0]), nbActors);
-		Snippets::renderActors(&actors[0], static_cast<PxU32>(actors.size()), true);
+		Snippets::renderActors(&actors[0], static_cast<PxU32>(1), true,PxVec3(1.0f, 1.0f, 1.0f));
+		Snippets::renderActors(&actors[1], static_cast<PxU32>(1), true, PxVec3(1.0f, 1.0f, 1.0f));
+		Snippets::renderActors(&actors[2], static_cast<PxU32>(1), true, PxVec3(1.0f, 1.0f, 1.0f));
+		Snippets::renderActors(&actors[3], static_cast<PxU32>(1), true, PxVec3(1.0f, 1.0f, 1.0f));
+		Snippets::renderActors(&actors[4], static_cast<PxU32>(1), true, PxVec3(1.0f, 1.0f, 1.0f));
+		Snippets::renderActors(&actors[5], static_cast<PxU32>(1), true, PxVec3(1.0f, 1.0f, 1.0f));
+		Snippets::renderActors(&actors[6], static_cast<PxU32>(1), true, PxVec3(0.5f, 0.5f, 0.5f));
+		Snippets::renderActors(&actors[7], static_cast<PxU32>(1), true, PxVec3(0.5f, 0.5f, 0.5f));
+		Snippets::renderActors(&actors[8], static_cast<PxU32>(actors.size()-8), true, PxVec3(0.75f, 0.75f, 0.75f));
 	}
 
 	Snippets::finishRender();
