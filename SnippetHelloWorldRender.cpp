@@ -43,10 +43,14 @@ extern void stepPhysics(bool interactive);
 extern void cleanupPhysics(bool interactive);
 extern void keyPress(unsigned char key, const PxTransform& camera);
 
+extern std::vector<PxVec3> gContactPositions;
+extern std::vector<PxVec3> gContactImpulses;
+std::vector<PxVec3> gContactVertices;
 
 namespace
 {
 Snippets::Camera*	sCamera;
+
 
 void motionCallback(int x, int y)
 {
@@ -88,6 +92,22 @@ void renderCallback()
 		Snippets::renderActors(&actors[0], static_cast<PxU32>(actors.size()), true);
 	}
 
+	if (gContactPositions.size())
+	{
+		gContactVertices.clear();
+		for (PxU32 i = 0; i < gContactPositions.size(); i++)
+		{
+			gContactVertices.push_back(gContactPositions[i]);
+			gContactVertices.push_back(gContactPositions[i] + gContactImpulses[i] * 0.1f);
+		}
+		glColor4f(1.0f, 0.0f, 0.0f, 1.0f);
+		glEnableClientState(GL_VERTEX_ARRAY);
+		glVertexPointer(3, GL_FLOAT, 0, &gContactVertices[0]);
+		glDrawArrays(GL_LINES, 0, GLint(gContactVertices.size()));
+		glDisableClientState(GL_VERTEX_ARRAY);
+		
+	}
+
 	Snippets::finishRender();
 }
 
@@ -101,7 +121,8 @@ void exitCallback(void)
 void renderLoop()
 {
 
-	sCamera = new Snippets::Camera(PxVec3(0.0f, 150.0f, 150.0f), PxVec3(0.0f,-5.f,-5.f));
+	sCamera = new Snippets::Camera(PxVec3(0.0f, 250.0f, 250.0f), PxVec3(0.0f,-5.f,-5.f));
+
 
 
 	Snippets::setupDefaultWindow("PhysX Snippet HelloWorld");
@@ -117,6 +138,8 @@ void renderLoop()
 	atexit(exitCallback);
 
 	initPhysics(true);
+
+
 	glutMainLoop();
 }
 #endif
