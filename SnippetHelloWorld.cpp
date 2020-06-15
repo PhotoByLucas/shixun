@@ -1,5 +1,3 @@
-
-
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions
 // are met:
@@ -35,8 +33,12 @@
 // user to create new stacks and fire a ball from the camera position
 // ****************************************************************************
 
+
+
+
+
 #include <ctype.h>
-#include <vector>
+
 #include "PxPhysicsAPI.h"
 
 #include "foundation/PxMemory.h"
@@ -49,8 +51,13 @@
 #include "PxImmediateMode.h"
 #include "extensions/PxMassProperties.h"
 
+#include "score.h"
+#include <iostream>
+#include <vector>
 
 using namespace physx;
+using namespace std;
+
 
 
 
@@ -72,10 +79,13 @@ PxRigidDynamic* dynamicBall = NULL;
 PxRigidStatic* plane;
 
 
+
 std::vector<PxVec3> gContactPositions;
 std::vector<PxVec3> gContactImpulses;
 
 bool					gUseBinarySerialization = false;
+
+
 PxRigidDynamic* current = NULL;
 PxRigidDynamic* current1 = NULL;
 
@@ -147,17 +157,25 @@ PxRigidDynamic* createDynamic(const PxTransform& t, const PxGeometry& geometry, 
 	return dynamic;
 }
 
+int score = 0;
+//Ôö¼Ó·ÖÊý
+void increaseScore()
+{
+	score++;
+	cout << score << endl;
+}
+
 void moveLeft(PxRigidDynamic* left) {
 	//left->setActorFlag(PxActorFlag::eDISABLE_GRAVITY, true);
 	//left->addTorque(PxVec3(0, 0, 1000000), PxForceMode::eFORCE, true);
-	left->addForce(PxVec3(-1000000000.0f, 0, -1000000000.0f), PxForceMode::eFORCE, true);
+	left->addForce(PxVec3(-100000000.0f, 0, -100000000.0f), PxForceMode::eFORCE, true);
 	//PxRigidBodyExt::addForceAtLocalPos(left->)
 	//left->setAngularVelocity(PxVec3(10000, 0, 10000), true);
 }
 void moveRight(PxRigidDynamic* right) {
 	//left->setActorFlag(PxActorFlag::eDISABLE_GRAVITY, true);
 	//left->addTorque(PxVec3(0, 0, 1000000), PxForceMode::eFORCE, true);
-	right->addForce(PxVec3(1000000000.0f, 0, -1000000000.0f), PxForceMode::eFORCE, true);
+	right->addForce(PxVec3(100000000.0f, 0, -100000000.0f), PxForceMode::eFORCE, true);
 	//PxRigidBodyExt::addForceAtLocalPos(left->)
 	//left->setAngularVelocity(PxVec3(10000, 0, 10000), true);
 }
@@ -197,7 +215,7 @@ PxJoint* createDampedD62(PxRigidActor* a0, const PxTransform& t0, PxRigidActor* 
 }
 
 
-
+bool isBall = false;
 //¹ìµÀ·¢ÉäÇò
 PxRigidDynamic* createBall(const PxTransform& t, const PxGeometry& geometry, const PxVec3& velocity = PxVec3(100))
 {
@@ -210,9 +228,14 @@ PxRigidDynamic* createBall(const PxTransform& t, const PxGeometry& geometry, con
 	//dynamic->addForce(PxVec3(1, 0, 0),physx::PxForceMode::eFORCE , true);
 	//dynamic->setAngularVelocity(velocity);
 	gScene->addActor(*dynamicBall);
-
+	isBall = true;
 
 	return dynamicBall;
+}
+
+void removeBall() {
+	gScene->removeActor(*dynamicBall);
+	isBall = false;
 }
 
 
@@ -368,7 +391,7 @@ void initPhysics(bool interactive)
 	rightHandWall1->setLocalPose(relativePose1);
 
 
-	PxRigidStatic* rightStaticStick = PxCreateStatic(*gPhysics, PxTransform(PxVec3(60.0f, 10.0f, 110.0f)), *rightHandWall1);
+	PxRigidStatic* rightStaticStick = PxCreateStatic(*gPhysics, PxTransform(PxVec3(58.0f, 10.0f, 110.0f)), *rightHandWall1);
 	current = PxCreateDynamic(*gPhysics, PxTransform(PxVec3(90.0f, 30.0f, 95.0f))*localTm, PxBoxGeometry(18.0f, 10.0f, 1.0f), *gMaterial, 1.0f);
 	(*createDampedD62)(rightStaticStick, PxTransform(PxVec3(-27.0f, 0.0f, 16.5f)), current, PxTransform(offset));
 	//current->setMass(30.0f);
@@ -397,8 +420,6 @@ void initPhysics(bool interactive)
 
 	gScene->addActor(*leftStaticStick);
 	gScene->addActor(*current1);
-
-
 
 
 
@@ -456,9 +477,12 @@ void keyPress(unsigned char key, const PxTransform& camera)
 	{
 	case 'B':	createStack(PxTransform(PxVec3(0,0,stackZ-=10.0f)), 10, 2.0f);						break;
 	case ' ':	createDynamic(camera, PxSphereGeometry(4.0f), camera.rotate(PxVec3(0,0,-1))*200);	break;
-	case 'T':	createBall(PxTransform(PxVec3(95.0f, 2.0f, 184.0f)), PxSphereGeometry(3.55f), PxVec3(0, 0, -100));	break;
+	case 'T':	if (!isBall) { createBall(PxTransform(PxVec3(95.0f, 2.0f, 184.0f)), PxSphereGeometry(3.55f), PxVec3(0, 0, -100)); }
+				break;
 	case 'Q':   moveLeft(current1); break;//×ó°Ú±Û
-	case 'E':;  moveRight(current); break;//ÓÒ°Ú±Û
+	case 'E':   moveRight(current); break;//ÓÒ°Ú±Û
+	case 'I':   increaseScore(); break;
+	case 'U':   removeBall(); break;
 			/***default:
 		current->setActorFlag(PxActorFlag::eDISABLE_GRAVITY, false);
 		current->setAngularVelocity(PxVec3(0, 0, -10000), true);

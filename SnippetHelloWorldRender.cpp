@@ -1,3 +1,4 @@
+
 //
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions
@@ -32,25 +33,25 @@
 #include <vector>
 
 #include "PxPhysicsAPI.h"
+#include<iostream>
+#include <string>
+#include "score.h"
 
 #include "../SnippetRender/SnippetRender.h"
 #include "../SnippetRender/SnippetCamera.h"
 
 using namespace physx;
+using namespace std;
 
 extern void initPhysics(bool interactive);
 extern void stepPhysics(bool interactive);	
 extern void cleanupPhysics(bool interactive);
 extern void keyPress(unsigned char key, const PxTransform& camera);
 
-extern std::vector<PxVec3> gContactPositions;
-extern std::vector<PxVec3> gContactImpulses;
-std::vector<PxVec3> gContactVertices;
 
 namespace
 {
 Snippets::Camera*	sCamera;
-
 
 void motionCallback(int x, int y)
 {
@@ -81,7 +82,15 @@ void renderCallback()
 	stepPhysics(true);
 
 	Snippets::startRender(sCamera->getEye(), sCamera->getDir());
+	Snippets::renderText(5, 96, "Press T to launch a ball.",25);
+	Snippets::renderText(5, 90, "Press Q/E to hit the ball.", 25);
+	Snippets::renderText(5, 84, "Your score:", 12);
 
+	//在屏幕上打印分数
+	string scoreString = to_string(score);
+	char c[100];
+	strcpy(c, scoreString.data());
+	Snippets::renderText(30, 84, c, 10);
 
 	PxScene* scene;
 	PxGetPhysics().getScenes(&scene,1);
@@ -101,21 +110,7 @@ void renderCallback()
 		Snippets::renderActors(&actors[8], static_cast<PxU32>(actors.size()-8), true, PxVec3(0.75f, 0.75f, 0.75f));
 	}
 
-	if (gContactPositions.size())
-	{
-		gContactVertices.clear();
-		for (PxU32 i = 0; i < gContactPositions.size(); i++)
-		{
-			gContactVertices.push_back(gContactPositions[i]);
-			gContactVertices.push_back(gContactPositions[i] + gContactImpulses[i] * 0.1f);
-		}
-		glColor4f(1.0f, 0.0f, 0.0f, 1.0f);
-		glEnableClientState(GL_VERTEX_ARRAY);
-		glVertexPointer(3, GL_FLOAT, 0, &gContactVertices[0]);
-		glDrawArrays(GL_LINES, 0, GLint(gContactVertices.size()));
-		glDisableClientState(GL_VERTEX_ARRAY);
-		
-	}
+	
 
 	Snippets::finishRender();
 }
@@ -130,9 +125,7 @@ void exitCallback(void)
 void renderLoop()
 {
 
-	sCamera = new Snippets::Camera(PxVec3(0.0f, 250.0f, 250.0f), PxVec3(0.0f,-5.f,-5.f));
-
-
+	sCamera = new Snippets::Camera(PxVec3(0.0f, 250.0f, 250.0f), PxVec3(0.0f,-6.f,-5.f));
 
 	Snippets::setupDefaultWindow("PhysX Snippet HelloWorld");
 	Snippets::setupDefaultRenderState();
@@ -147,8 +140,7 @@ void renderLoop()
 	atexit(exitCallback);
 
 	initPhysics(true);
-
-
 	glutMainLoop();
 }
 #endif
+
