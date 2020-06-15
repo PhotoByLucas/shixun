@@ -32,11 +32,15 @@
 #include <vector>
 
 #include "PxPhysicsAPI.h"
+#include<iostream>
+#include <string>
+#include "score.h"
 
 #include "../SnippetRender/SnippetRender.h"
 #include "../SnippetRender/SnippetCamera.h"
 
 using namespace physx;
+using namespace std;
 
 extern void initPhysics(bool interactive);
 extern void stepPhysics(bool interactive);	
@@ -77,7 +81,15 @@ void renderCallback()
 	stepPhysics(true);
 
 	Snippets::startRender(sCamera->getEye(), sCamera->getDir());
+	Snippets::renderText(5, 96, "Press T to launch a ball.",25);
+	Snippets::renderText(5, 90, "Press Q/E to hit the ball.", 25);
+	Snippets::renderText(5, 84, "Your score:", 12);
 
+	//在屏幕上打印分数
+	string scoreString = to_string(score);
+	char c[100];
+	strcpy(c, scoreString.data());
+	Snippets::renderText(30, 84, c, 10);
 
 	PxScene* scene;
 	PxGetPhysics().getScenes(&scene,1);
@@ -97,6 +109,8 @@ void renderCallback()
 		Snippets::renderActors(&actors[8], static_cast<PxU32>(actors.size()-8), true, PxVec3(0.75f, 0.75f, 0.75f));
 	}
 
+	
+
 	Snippets::finishRender();
 }
 
@@ -110,7 +124,7 @@ void exitCallback(void)
 void renderLoop()
 {
 
-	sCamera = new Snippets::Camera(PxVec3(0.0f, 250.0f, 250.0f), PxVec3(0.0f,-5.f,-5.f));
+	sCamera = new Snippets::Camera(PxVec3(0.0f, 250.0f, 250.0f), PxVec3(0.0f,-6.f,-5.f));
 
 	Snippets::setupDefaultWindow("PhysX Snippet HelloWorld");
 	Snippets::setupDefaultRenderState();
