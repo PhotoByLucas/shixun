@@ -28,7 +28,6 @@
 // Copyright (c) 2001-2004 NovodeX AG. All rights reserved.  
 
 #include "SnippetRender.h"
-
 using namespace physx;
 
 static float gCylinderData[]={
@@ -219,10 +218,10 @@ void renderGeometry(const PxGeometryHolder& h)
 	case PxGeometryType::eINVALID:
 	case PxGeometryType::eHEIGHTFIELD:
 	case PxGeometryType::eGEOMETRY_COUNT:	
-	case PxGeometryType::ePLANE:/*这里设置了平面，给了几个点让glut画了个正方形，颜色设置为120的绿色（满值是255）*/
+	case PxGeometryType::ePLANE:/*设置平面，设置RGB颜色（满值是255）*/
 		glBegin(GL_QUADS);
 
-		glColor4ub(147, 224, 235, 255); glVertex3f(-1.0f, -100.0f, -200.0f);/*这个坐标有点奇怪 后面应该是变换过，不用太在意，反正就当第一个是y轴就可以了*/
+		glColor4ub(147, 224, 235, 255); glVertex3f(-1.0f, -100.0f, -200.0f);
 
 		glColor4ub(147, 224, 235, 255); glVertex3f(-1.0f, -100.0f, 200.0f);// y轴 宽度 长度
 
@@ -362,6 +361,32 @@ void finishRender()
 	glutSwapBuffers();
 }
 
+void renderText(int x, int y, const char text[], int len)
+{
+	glMatrixMode(GL_PROJECTION);
+	glPushMatrix();
+	glLoadIdentity();
+	gluOrtho2D(0, GLUT_WINDOW_WIDTH, 0, GLUT_WINDOW_HEIGHT);
+	glMatrixMode(GL_MODELVIEW);
+	glPushMatrix();
 
-} //namespace Snippets
+	glLoadIdentity();
+	glRasterPos2i(x, y);
+	for (int i = 0; i < len; i++) {
+		glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_24, text[i]);
+
+	}
+	glPopMatrix();
+	glMatrixMode(GL_PROJECTION);
+	glPopMatrix();
+	glMatrixMode(GL_MODELVIEW);
+
+}
+
+
+} 
+
+
+
+//namespace Snippets
 
