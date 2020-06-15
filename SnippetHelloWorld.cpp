@@ -71,6 +71,7 @@ PxPhysics*				gPhysics	= NULL;
 PxDefaultCpuDispatcher*	gDispatcher = NULL;
 PxScene*				gScene		= NULL;
 
+
 PxMaterial*				gMaterial	= NULL;
 
 PxPvd*                  gPvd        = NULL;
@@ -194,7 +195,9 @@ PxJoint* createDampedD61(PxRigidActor* a0, const PxTransform& t0, PxRigidActor* 
 	//j->setMotion(PxD6Axis::eSWING2, PxD6Motion::eFREE);
 	//j->setMotion(PxD6Axis::eTWIST, PxD6Motion::eFREE);
 	//j->setLinearLimit(PxJointLinearLimit(1.0f, 0.1f));
-	j->setSwingLimit(PxJointLimitCone(PxPi/6, PxPi / 6, 1.0f));
+
+	j->setSwingLimit(PxJointLimitCone(PxPi/6, PxPi/6, 1.0f));
+
 	j->setProjectionLinearTolerance(0.1f);
 	j->setConstraintFlag(PxConstraintFlag::ePROJECTION, true);
 	j->setDrive(PxD6Drive::eSLERP, PxD6JointDrive(0, 1000, FLT_MAX, true));
@@ -224,6 +227,7 @@ PxRigidDynamic* createBall(const PxTransform& t, const PxGeometry& geometry, con
 	dynamicBall->setAngularDamping(0.5f);
 	dynamicBall->setLinearVelocity(velocity);
 	dynamicBall->setRigidDynamicLockFlags(PxRigidDynamicLockFlag::eLOCK_LINEAR_Y);
+	dynamicBall->setRigidBodyFlag(PxRigidBodyFlag::eENABLE_CCD, true);
 	//dynamicBall->setMass(1.0f);
 	//dynamic->addForce(PxVec3(1, 0, 0),physx::PxForceMode::eFORCE , true);
 	//dynamic->setAngularVelocity(velocity);
@@ -257,8 +261,42 @@ void createStack(const PxTransform& t, PxU32 size, PxReal halfExtent)
 	
 	shape->release();
 }
-
-
+/***
+static PxFilterFlags filterShader(
+	PxFilterObjectAttributes attributes0,
+	PxFilterData filterData0,
+	PxFilterObjectAttributes attributes1,
+	PxFilterData filterData1,
+	PxPairFlags& pairFlags,
+	const void* constantBlock,
+	PxU32 constantBlockSize)
+{
+	pairFlags = PxPairFlag::eSOLVE_CONTACT;
+	pairFlags |= PxPairFlag::eDETECT_DISCRETE_CONTACT;
+	pairFlags |= PxPairFlag::eDETECT_CCD_CONTACT;
+	return PxFilterFlags();
+}
+***/
+PxFilterFlags testCCDFilterShader
+(PxFilterObjectAttributes attributes0,
+	PxFilterData filterData0,
+	PxFilterObjectAttributes attributes1,
+	PxFilterData filterData1,
+	PxPairFlags& pairFlags,
+	const void* constantBlock,
+	PxU32 constantBlockSize) {
+	PX_UNUSED(attributes0);
+	PX_UNUSED(attributes1);
+	PX_UNUSED(constantBlock);
+	PX_UNUSED(constantBlockSize);
+	if ((0 == (filterData0.word0 & filterData1.word1)) && (0 == (filterData1.word0 & filterData0. word1)))
+		return PxFilterFlag::eSUPPRESS;
+	if (filterData0.word0 == 32)
+		PX_UNUSED(0);
+	pairFlags = PxPairFlag::eCONTACT_DEFAULT;
+	pairFlags |= PxPairFlags(PxU16(filterData0.word2 | filterData1.word2));
+	return PxFilterFlags();
+}
 
 void initPhysics(bool interactive)
 {
@@ -274,6 +312,10 @@ void initPhysics(bool interactive)
 
 	PxSceneDesc sceneDesc(gPhysics->getTolerancesScale());
 	sceneDesc.gravity = PxVec3(0.0f, 0.0f, 1.0f);
+
+	sceneDesc.flags |= PxSceneFlag::eENABLE_CCD;
+	sceneDesc.filterShader = testCCDFilterShader;
+
 	gDispatcher = PxDefaultCpuDispatcherCreate(2);
 	sceneDesc.cpuDispatcher	= gDispatcher;
 	sceneDesc.filterShader	= contactReportFilterShader;
@@ -392,9 +434,10 @@ void initPhysics(bool interactive)
 
 
 	PxRigidStatic* rightStaticStick = PxCreateStatic(*gPhysics, PxTransform(PxVec3(58.0f, 10.0f, 110.0f)), *rightHandWall1);
-	current = PxCreateDynamic(*gPhysics, PxTransform(PxVec3(90.0f, 30.0f, 95.0f))*localTm, PxBoxGeometry(18.0f, 10.0f, 1.0f), *gMaterial, 1.0f);
+	current = PxCreateDynamic(*gPhysics, PxTransform(PxVec3(90.0f, 30.0f, 95.0f))*localTm, PxBoxGeometry(16.0f, 10.0f, 1.0f), *gMaterial, 1.0f);
 	(*createDampedD62)(rightStaticStick, PxTransform(PxVec3(-27.0f, 0.0f, 16.5f)), current, PxTransform(offset));
 	//current->setMass(30.0f);
+	current->setRigidBodyFlag(PxRigidBodyFlag::eENABLE_CCD, true);
 	gScene->addActor(*rightStaticStick);
 	gScene->addActor(*current);
 	
@@ -414,10 +457,12 @@ void initPhysics(bool interactive)
 	leftHandWall1->setLocalPose(relativePose2);
 
 	PxRigidStatic* leftStaticStick = PxCreateStatic(*gPhysics, PxTransform(PxVec3(-70.0f, 10.0f, 110.0f)), *leftHandWall1);
-	current1 = PxCreateDynamic(*gPhysics, PxTransform(PxVec3(90.0f, 30.0f, 95.0f))*localTm, PxBoxGeometry(18.0f, 10.0f, 1.0f), *gMaterial, 1.0f);
+	current1 = PxCreateDynamic(*gPhysics, PxTransform(PxVec3(90.0f, 30.0f, 95.0f))*localTm, PxBoxGeometry(16.0f, 10.0f, 1.0f), *gMaterial, 1.0f);
 	//current1->setMass(30.0f);
-	(*createDampedD61)(leftStaticStick, PxTransform(PxVec3(27.0f, 0.0f, 16.5f)), current1, PxTransform(-offset));
 
+
+	(*createDampedD61)(leftStaticStick, PxTransform(PxVec3(27.0f, 0.0f, 16.5f)), current1, PxTransform(-offset));
+	current1->setRigidBodyFlag(PxRigidBodyFlag::eENABLE_CCD, true);
 	gScene->addActor(*leftStaticStick);
 	gScene->addActor(*current1);
 
