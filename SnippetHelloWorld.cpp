@@ -195,7 +195,6 @@ PxJoint* createDampedD61(PxRigidActor* a0, const PxTransform& t0, PxRigidActor* 
 	//j->setMotion(PxD6Axis::eSWING2, PxD6Motion::eFREE);
 	//j->setMotion(PxD6Axis::eTWIST, PxD6Motion::eFREE);
 	//j->setLinearLimit(PxJointLinearLimit(1.0f, 0.1f));
-
 	j->setSwingLimit(PxJointLimitCone(PxPi/6, PxPi/6, 1.0f));
 
 	j->setProjectionLinearTolerance(0.1f);
@@ -222,7 +221,6 @@ bool isBall = false;
 //���������
 PxRigidDynamic* createBall(const PxTransform& t, const PxGeometry& geometry, const PxVec3& velocity = PxVec3(100))
 {
-
 	dynamicBall = PxCreateDynamic(*gPhysics, t, geometry, *gMaterial, 10.0f);
 	dynamicBall->setAngularDamping(0.5f);
 	dynamicBall->setLinearVelocity(velocity);
@@ -241,8 +239,6 @@ void removeBall() {
 	gScene->removeActor(*dynamicBall);
 	isBall = false;
 }
-
-
 
 void createStack(const PxTransform& t, PxU32 size, PxReal halfExtent)
 {
