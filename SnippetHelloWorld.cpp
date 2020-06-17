@@ -77,6 +77,7 @@ PxMaterial*				gMaterial	= NULL;
 PxPvd*                  gPvd        = NULL;
 
 PxRigidDynamic* dynamicBall = NULL;
+
 PxRigidStatic* plane;
 
 
@@ -92,57 +93,67 @@ PxRigidDynamic* current1 = NULL;
 
 PxReal stackZ = 10.0f;
 
-PxFilterFlags contactReportFilterShader(PxFilterObjectAttributes attributes0, PxFilterData filterData0,
+PxFilterFlags ballFilterShader(
+	PxFilterObjectAttributes attributes0, PxFilterData filterData0,
 	PxFilterObjectAttributes attributes1, PxFilterData filterData1,
 	PxPairFlags& pairFlags, const void* constantBlock, PxU32 constantBlockSize)
 {
-	PX_UNUSED(attributes0);
-	PX_UNUSED(attributes1);
-	PX_UNUSED(filterData0);
-	PX_UNUSED(filterData1);
-	PX_UNUSED(constantBlockSize);
-	PX_UNUSED(constantBlock);
+	// let triggers through
+	if (PxFilterObjectIsTrigger(attributes0) || PxFilterObjectIsTrigger(attributes1))
+	{
+		pairFlags = PxPairFlag::eTRIGGER_DEFAULT;
+		return PxFilterFlag::eDEFAULT;
+	}
+	// generate contacts for all that were not filtered above
+	pairFlags = PxPairFlag::eCONTACT_DEFAULT;
 
-	// all initial and persisting reports for everything, with per-point data
-	pairFlags = PxPairFlag::eSOLVE_CONTACT | PxPairFlag::eDETECT_DISCRETE_CONTACT
-		| PxPairFlag::eNOTIFY_TOUCH_FOUND
-		| PxPairFlag::eNOTIFY_TOUCH_PERSISTS
-		| PxPairFlag::eNOTIFY_CONTACT_POINTS;
+	// trigger the contact callback for pairs (A,B) where 
+	// the filtermask of A contains the ID of B and vice versa.
+	if ((filterData0.word0 & filterData1.word1) && (filterData1.word0 & filterData0.word1))
+
+	{
+		score += 5;
+		pairFlags|= PxPairFlag::eNOTIFY_TOUCH_FOUND;
+	}
+
 	return PxFilterFlag::eDEFAULT;
 }
 
+static const PxFilterData collisionGroupBall(1, 1, 1, 1);
+static const PxFilterData collisionGroupObstacle(1, 1, 1, 1);
 
-class ContactReportCallback : public PxSimulationEventCallback
-{
-	void onConstraintBreak(PxConstraintInfo* constraints, PxU32 count) { PX_UNUSED(constraints); PX_UNUSED(count); }
-	void onWake(PxActor** actors, PxU32 count) { PX_UNUSED(actors); PX_UNUSED(count); }
-	void onSleep(PxActor** actors, PxU32 count) { PX_UNUSED(actors); PX_UNUSED(count); }
-	void onTrigger(PxTriggerPair* pairs, PxU32 count) { PX_UNUSED(pairs); PX_UNUSED(count); }
-	void onAdvance(const PxRigidBody*const*, const PxTransform*, const PxU32) {}
-	void onContact(const PxContactPairHeader& pairHeader, const PxContactPair* pairs, PxU32 nbPairs)
-	{
-		PX_UNUSED((pairHeader));
-		std::vector<PxContactPairPoint> contactPoints;
 
-		for (PxU32 i = 0; i < nbPairs; i++)
-		{
-			PxU32 contactCount = pairs[i].contactCount;
-			if (contactCount)
-			{
-				contactPoints.resize(contactCount);
-				pairs[i].extractContacts(&contactPoints[0], contactCount);
+//class ContactReportCallback : public PxSimulationEventCallback
+//{
+//	void onConstraintBreak(PxConstraintInfo* constraints, PxU32 count) { PX_UNUSED(constraints); PX_UNUSED(count); }
+//	void onWake(PxActor** actors, PxU32 count) { PX_UNUSED(actors); PX_UNUSED(count); }
+//	void onSleep(PxActor** actors, PxU32 count) { PX_UNUSED(actors); PX_UNUSED(count); }
+//	void onTrigger(PxTriggerPair* pairs, PxU32 count) { PX_UNUSED(pairs); PX_UNUSED(count); }
+//	void onAdvance(const PxRigidBody*const*, const PxTransform*, const PxU32) {}
+//	void onContact(const PxContactPairHeader& pairHeader, const PxContactPair* pairs, PxU32 nbPairs)
+//	{
+//		PX_UNUSED((pairHeader));
+//		std::vector<PxContactPairPoint> contactPoints;
+//
+//		for (PxU32 i = 0; i < nbPairs; i++)
+//		{
+//			PxU32 contactCount = pairs[i].contactCount;
+//			if (contactCount)
+//			{
+//				contactPoints.resize(contactCount);
+//				pairs[i].extractContacts(&contactPoints[0], contactCount);
+//
+//				for (PxU32 j = 0; j < contactCount; j++)
+//				{
+//					gContactPositions.push_back(contactPoints[j].position);
+//					gContactImpulses.push_back(contactPoints[j].impulse);
+//				}
+//			}
+//		}
+//	}
+//};
 
-				for (PxU32 j = 0; j < contactCount; j++)
-				{
-					gContactPositions.push_back(contactPoints[j].position);
-					gContactImpulses.push_back(contactPoints[j].impulse);
-				}
-			}
-		}
-	}
-};
-
-ContactReportCallback gContactReportCallback;
+//ContactReportCallback gContactReportCallback;
 
 PxRigidDynamic* createDynamic(const PxTransform& t, const PxGeometry& geometry, const PxVec3& velocity=PxVec3(100))
 {
@@ -228,12 +239,15 @@ PxRigidDynamic* createBall(const PxTransform& t, const PxGeometry& geometry, con
 	dynamicBall->setLinearVelocity(velocity);
 	dynamicBall->setRigidDynamicLockFlags(PxRigidDynamicLockFlag::eLOCK_LINEAR_Y);
 	dynamicBall->setRigidBodyFlag(PxRigidBodyFlag::eENABLE_CCD, true);
+
 	//dynamicBall->setMass(1.0f);
 	//dynamic->addForce(PxVec3(1, 0, 0),physx::PxForceMode::eFORCE , true);
 	//dynamic->setAngularVelocity(velocity);
+	PxShape* dynamicBallShape = PxRigidActorExt::createExclusiveShape(*dynamicBall, geometry, *gMaterial);
+	dynamicBallShape->setSimulationFilterData(collisionGroupBall);//小球物碰撞标识
 	gScene->addActor(*dynamicBall);
 	isBall = true;
-
+	
 	return dynamicBall;
 }
 
@@ -261,42 +275,7 @@ void createStack(const PxTransform& t, PxU32 size, PxReal halfExtent)
 	
 	shape->release();
 }
-/***
-static PxFilterFlags filterShader(
-	PxFilterObjectAttributes attributes0,
-	PxFilterData filterData0,
-	PxFilterObjectAttributes attributes1,
-	PxFilterData filterData1,
-	PxPairFlags& pairFlags,
-	const void* constantBlock,
-	PxU32 constantBlockSize)
-{
-	pairFlags = PxPairFlag::eSOLVE_CONTACT;
-	pairFlags |= PxPairFlag::eDETECT_DISCRETE_CONTACT;
-	pairFlags |= PxPairFlag::eDETECT_CCD_CONTACT;
-	return PxFilterFlags();
-}
-***/
-PxFilterFlags testCCDFilterShader
-(PxFilterObjectAttributes attributes0,
-	PxFilterData filterData0,
-	PxFilterObjectAttributes attributes1,
-	PxFilterData filterData1,
-	PxPairFlags& pairFlags,
-	const void* constantBlock,
-	PxU32 constantBlockSize) {
-	PX_UNUSED(attributes0);
-	PX_UNUSED(attributes1);
-	PX_UNUSED(constantBlock);
-	PX_UNUSED(constantBlockSize);
-	if ((0 == (filterData0.word0 & filterData1.word1)) && (0 == (filterData1.word0 & filterData0. word1)))
-		return PxFilterFlag::eSUPPRESS;
-	if (filterData0.word0 == 32)
-		PX_UNUSED(0);
-	pairFlags = PxPairFlag::eCONTACT_DEFAULT;
-	pairFlags |= PxPairFlags(PxU16(filterData0.word2 | filterData1.word2));
-	return PxFilterFlags();
-}
+
 
 void initPhysics(bool interactive)
 {
@@ -314,12 +293,11 @@ void initPhysics(bool interactive)
 	sceneDesc.gravity = PxVec3(0.0f, 0.0f, 1.0f);
 
 	sceneDesc.flags |= PxSceneFlag::eENABLE_CCD;
-	sceneDesc.filterShader = testCCDFilterShader;
+	sceneDesc.filterShader = ballFilterShader;
 
 	gDispatcher = PxDefaultCpuDispatcherCreate(2);
 	sceneDesc.cpuDispatcher	= gDispatcher;
-	sceneDesc.filterShader	= contactReportFilterShader;
-	sceneDesc.simulationEventCallback = &gContactReportCallback;
+
 	gScene = gPhysics->createScene(sceneDesc);
 
 	PxPvdSceneClient* pvdClient = gScene->getScenePvdClient();
@@ -383,6 +361,7 @@ void initPhysics(bool interactive)
 	//PxRigidStatic* stick0 = gPhysics->createRigidStatic(PxTransform(PxVec3(10.0f, 0.0f, -70.0f)));
 	PxTransform relativePose(PxQuat(PxHalfPi, PxVec3(0, 0, 1)));
 	capsuleShape->setLocalPose(relativePose);
+	capsuleShape->setSimulationFilterData(collisionGroupObstacle);//障碍物碰撞标识
 
 	//其他障碍
 	PxRigidStatic* stick1 = PxCreateStatic(*gPhysics, PxTransform(PxVec3(0.0f, 0.0f, 0.0f)), *capsuleShape);
@@ -495,7 +474,7 @@ void stepPhysics(bool interactive)
 	gScene->fetchResults(true);
 	//到达指定区域之后gScene->removeActor()小球
 
-	printf("%d contact reports\n", PxU32(gContactPositions.size()));
+
 
 	
 }
@@ -522,7 +501,11 @@ void keyPress(unsigned char key, const PxTransform& camera)
 	{
 	case 'B':	createStack(PxTransform(PxVec3(0,0,stackZ-=10.0f)), 10, 2.0f);						break;
 	case ' ':	createDynamic(camera, PxSphereGeometry(4.0f), camera.rotate(PxVec3(0,0,-1))*200);	break;
-	case 'T':	if (!isBall) { createBall(PxTransform(PxVec3(95.0f, 2.0f, 184.0f)), PxSphereGeometry(3.55f), PxVec3(0, 0, -100)); }
+	case 'T':	if (!isBall) 
+	{ 
+		createBall(PxTransform(PxVec3(95.0f, 2.0f, 184.0f)), PxSphereGeometry(3.55f), PxVec3(0, 0, -100)); 
+		
+	}
 				break;
 	case 'Q':   moveLeft(current1); break;//左摆臂
 	case 'E':   moveRight(current); break;//右摆臂
