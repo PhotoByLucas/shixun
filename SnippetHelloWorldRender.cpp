@@ -1,5 +1,5 @@
-
-//
+ï»¿
+// æµ‹è¯•
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions
 // are met:
@@ -86,7 +86,7 @@ void renderCallback()
 	Snippets::renderText(5, 90, "Press Q/E to hit the ball.", 25);
 	Snippets::renderText(5, 84, "Your score:", 12);
 
-	//ÔÚÆÁÄ»ÉÏ´òÓ¡·ÖÊı
+	//åœ¨å±å¹•ä¸Šæ‰“å°åˆ†æ•°
 	string scoreString = to_string(score);
 	char c[100];
 	strcpy(c, scoreString.data());
