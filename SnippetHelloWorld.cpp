@@ -1,4 +1,4 @@
-// Redistribution and use in source and binary forms, with or without
+ï»¿// Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions
 // are met:
 //  * Redistributions of source code must retain the above copyright
@@ -179,7 +179,7 @@ PxRigidDynamic* createDynamic(const PxTransform& t, const PxGeometry& geometry, 
 }
 
 int score = 0;
-//×ÔÔö·ÖÊý
+//è‡ªå¢žåˆ†æ•°
 void increaseScore()
 {
 	score++;
@@ -201,7 +201,7 @@ void moveRight(PxRigidDynamic* right) {
 	//left->setAngularVelocity(PxVec3(10000, 0, 10000), true);
 }
 
-//´´½¨¹Ø½Ú
+//åˆ›å»ºå…³èŠ‚
 PxJoint* createMyJoint(PxRigidActor* a0, const PxTransform& t0, PxRigidActor* a1, const PxTransform& t1) {
 	PxRevoluteJoint* j = PxRevoluteJointCreate(*gPhysics, a0, t0, a1, t1);
 	j->setProjectionLinearTolerance(0.1f);
@@ -238,7 +238,7 @@ PxJoint* createDampedD62(PxRigidActor* a0, const PxTransform& t0, PxRigidActor* 
 
 
 bool isBall = false;
-//·¢ÉäÐ¡Çò
+//å‘å°„å°çƒ
 PxRigidDynamic* createBall(const PxTransform& t, const PxGeometry& geometry, const PxVec3& velocity = PxVec3(100))
 {
 	dynamicBall = PxCreateDynamic(*gPhysics, t, geometry, *gMaterial, 10.0f);
@@ -250,7 +250,7 @@ PxRigidDynamic* createBall(const PxTransform& t, const PxGeometry& geometry, con
 	//dynamic->addForce(PxVec3(1, 0, 0),physx::PxForceMode::eFORCE , true);
 	//dynamic->setAngularVelocity(velocity);
 	PxShape* dynamicBallShape = PxRigidActorExt::createExclusiveShape(*dynamicBall, geometry, *gMaterial);
-	dynamicBallShape->setSimulationFilterData(collisionGroupBall);//Ð¡ÇòÎïÅö×²±êÊ¶
+	dynamicBallShape->setSimulationFilterData(collisionGroupBall);//å°çƒç‰©ç¢°æ’žæ ‡è¯†
 	gScene->addActor(*dynamicBall);
 	isBall = true;
 	
@@ -282,16 +282,16 @@ void createStack(const PxTransform& t, PxU32 size, PxReal halfExtent)
 
 
 
-//µØÍ¼³õÊ¼»¯
+//åœ°å›¾åˆå§‹åŒ–
 
 void createMap1() {
-	//½ºÄÒÕÏ°­
+	//èƒ¶å›Šéšœç¢
 	PxShape* capsuleShape = gPhysics->createShape(PxCapsuleGeometry(10.0f, 20.0f), *gMaterial);
 	//PxRigidStatic* stick0 = gPhysics->createRigidStatic(PxTransform(PxVec3(10.0f, 0.0f, -70.0f)));
 	PxTransform relativePose(PxQuat(PxHalfPi, PxVec3(0, 0, 1)));
 	capsuleShape->setLocalPose(relativePose);
 
-	//ÆäËûÕÏ°­
+	//å…¶ä»–éšœç¢
 	stick1 = PxCreateStatic(*gPhysics, PxTransform(PxVec3(0.0f, 0.0f, 0.0f)), *capsuleShape);
 	//stick->setRigidDynamicLockFlags(PxRigidDynamicLockFlag::eLOCK_LINEAR_Y);
 	gScene->addActor(*stick1);
@@ -361,7 +361,13 @@ void initPhysics(bool interactive)
 	}
 	gMaterial = gPhysics->createMaterial(0.98f, 0.98f, 0.98f);
 	
-	//´´½¨µØ°å£¬Î§Ç½
+	
+	/*********/
+	//èŠ±èŠ±ç‰›ç‰›ç‰›
+	/*********/
+
+
+	//åˆ›å»ºåœ°æ¿ï¼Œå›´å¢™
 	PxRigidStatic* groundPlane = PxCreatePlane(*gPhysics, PxPlane(0,1,0,0), *gMaterial);
 	gScene->addActor(*groundPlane);
 	PxShape* wallShape1 = gPhysics->createShape(PxBoxGeometry(100.0f,5.0f,1.5f), *gMaterial);
@@ -375,7 +381,7 @@ void initPhysics(bool interactive)
 	gScene->addActor(*eastWall);
 	gScene->addActor(*northWall);
 
-	//Ôö¼Óµ¯µÀÇ½
+	//å¢žåŠ å¼¹é“å¢™
 	PxShape* wallShape3 = gPhysics->createShape(PxBoxGeometry(1.0f, 5.0f, 160.0f), *gMaterial);
 	PxRigidStatic* smallWall = PxCreateStatic(*gPhysics, PxTransform(PxVec3(90.0f, 5.0f, 40.0f)), *wallShape3);
 	gScene->addActor(*smallWall);
@@ -393,25 +399,25 @@ void initPhysics(bool interactive)
 	//ball->addForce(PxVec3(0, 0, -10000000.0f), PxForceMode::eFORCE, true);
 	//gScene->addActor(*ball);
 
-		//´´½¨ÉÏ·½×ó²àÐ±Ð¡Ç½
+		//åˆ›å»ºä¸Šæ–¹å·¦ä¾§æ–œå°å¢™
 	PxShape* TopLeftWall = gPhysics->createShape(PxBoxGeometry(55.0f, 5.0f, 2.5f), *gMaterial);
 	PxTransform relativePose3(PxQuat(PxHalfPi*0.33, PxVec3(0, 1, 0)));
 	TopLeftWall->setLocalPose(relativePose3);
 	PxRigidStatic* stick6 = PxCreateStatic(*gPhysics, PxTransform(PxVec3(-52.5f, 5.0f, -175.0f)), *TopLeftWall);
 	gScene->addActor(*stick6);
 
-	//´´½¨ÉÏ·½ÓÒ²àÐ±Ð¡Ç½
+	//åˆ›å»ºä¸Šæ–¹å³ä¾§æ–œå°å¢™
 	PxShape* TopRightWall = gPhysics->createShape(PxBoxGeometry(50.0f, 5.0f, 2.5f), *gMaterial);
 	PxTransform relativePose4(PxQuat(-0.33*PxHalfPi, PxVec3(0, 1, 0)));
 	TopRightWall->setLocalPose(relativePose4);
 	PxRigidStatic* stick7 = PxCreateStatic(*gPhysics, PxTransform(PxVec3(55.0f, 5.0f, -175.0f)), *TopRightWall);
 	gScene->addActor(*stick7);
 
-	/***Éè¼ÆµØÍ¼²¿·Ö***/
+	/***è®¾è®¡åœ°å›¾éƒ¨åˆ†***/
 	createMap1();
 
-	//ÏÂ·½ÊÇµØÍ¼¹Ì¶¨²¿·Ö
-	//ÏÂ·½ÓÒ±ßµÄ×è¸ô
+	//ä¸‹æ–¹æ˜¯åœ°å›¾å›ºå®šéƒ¨åˆ†
+	//ä¸‹æ–¹å³è¾¹çš„é˜»éš”
 
 	//PxShape* rightHandWall = gPhysics->createShape(PxBoxGeometry(50.0f, 10.0f, 1.0f), *gMaterial);
 	PxTransform relativePose1(PxQuat(PxHalfPi*0.33, PxVec3(0, 1, 0)));
@@ -423,7 +429,7 @@ void initPhysics(bool interactive)
 	PxTransform localTm(offset);
 
 
-	//³¢ÊÔÓÃ¹Ø½ÚÊµÏÖÓÒ±ß°Ú±Û
+	//å°è¯•ç”¨å…³èŠ‚å®žçŽ°å³è¾¹æ‘†è‡‚
 	PxShape* rightHandWall1 = gPhysics->createShape(PxBoxGeometry(35.0f, 10.0f, 2.5f), *gMaterial);
 
 	//PxTransform relativePose1(PxQuat(PxHalfPi*0.33, PxVec3(0, 1, 0)));
@@ -439,7 +445,7 @@ void initPhysics(bool interactive)
 	gScene->addActor(*current);
 	
 
-	//´´½¨ÏÂ·½×ó²àÐ±Ð¡Ç½
+	//åˆ›å»ºä¸‹æ–¹å·¦ä¾§æ–œå°å¢™
 	//PxShape* leftHandWall = gPhysics->createShape(PxBoxGeometry(50.0f, 10.0f, 1.0f), *gMaterial);
 	PxTransform relativePose2(PxQuat(-0.33*PxHalfPi, PxVec3(0, 1, 0)));
 	//leftHandWall->setLocalPose(relativePose2);
@@ -448,7 +454,7 @@ void initPhysics(bool interactive)
 	//stick->setRigidDynamicLockFlags(PxRigidDynamicLockFlag::eLOCK_LINEAR_Y);
 
 
-	//³¢ÊÔÓÃ¹Ø½ÚÊµÏÖ×ó±ß°Ú±Û
+	//å°è¯•ç”¨å…³èŠ‚å®žçŽ°å·¦è¾¹æ‘†è‡‚
 	PxShape* leftHandWall1 = gPhysics->createShape(PxBoxGeometry(35.0f, 10.0f, 2.5f), *gMaterial);
 
 	//PxTransform relativePose1(PxQuat(PxHalfPi*0.33, PxVec3(0, 1, 0)));
@@ -470,7 +476,7 @@ void initPhysics(bool interactive)
 	//for(PxU32 i=0;i<5;i++)
 	//createStack(PxTransform(PxVec3(0,0,stackZ-=10.0f)), 10, 2.0f);
 
-	//ÏîÄ¿×Ô´ø·¢ÉäÐ¡Çò
+	//é¡¹ç›®è‡ªå¸¦å‘å°„å°çƒ
 	if(!interactive)
 		createDynamic(PxTransform(PxVec3(0,40,100)), PxSphereGeometry(10), PxVec3(0,0,0.1f));
 
@@ -520,8 +526,8 @@ void keyPress(unsigned char key, const PxTransform& camera)
 	case 'T':	if (!isBall) { createBall(PxTransform(PxVec3(95.0f, 2.0f, 184.0f)), PxSphereGeometry(3.55f), PxVec3(0, 0, -300)); }
 
 				break;
-	case 'Q':   moveLeft(current1); break;//ÒÆ¶¯×óµ²°å
-	case 'E':   moveRight(current); break;//ÒÆ¶¯ÓÒµ²°å
+	case 'Q':   moveLeft(current1); break;//ç§»åŠ¨å·¦æŒ¡æ¿
+	case 'E':   moveRight(current); break;//ç§»åŠ¨å³æŒ¡æ¿
 	case 'I':   increaseScore(); break;
 	case 'U':   removeBall(); break;
 	case '2':   createMap2(); break;
