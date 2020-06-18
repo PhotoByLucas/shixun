@@ -52,6 +52,7 @@
 #include "extensions/PxMassProperties.h"
 
 #include "score.h"
+#include "math.h"
 #include <iostream>
 #include <vector>
 
@@ -61,7 +62,7 @@ using namespace std;
 
 
 
-
+PxCooking*				gCooking = NULL;
 PxDefaultAllocator	gAllocator;
 PxDefaultErrorCallback gErrorCallback;
 
@@ -85,13 +86,50 @@ PxRigidStatic* plane;
 std::vector<PxVec3> gContactPositions;
 std::vector<PxVec3> gContactImpulses;
 
-bool	gUseBinarySerialization = false;
-
-
 PxRigidDynamic* current = NULL;
 PxRigidDynamic* current1 = NULL;
 
 PxReal stackZ = 10.0f;
+
+
+PxVec3 test_barrier[] = {
+	PxVec3(0,0,0),
+	PxVec3(10,0,0),
+	PxVec3(-5,0,sqrt(75)),
+	PxVec3(0,0,sqrt(300)),
+	PxVec3(15,0,sqrt(75)),
+	PxVec3(10,0,sqrt(300)),
+
+	PxVec3(0,10,0),
+	PxVec3(10,10,0),
+	PxVec3(-5,10,sqrt(75)),
+	PxVec3(0,10,sqrt(300)),
+	PxVec3(15,10,sqrt(75)),
+	PxVec3(10,10,sqrt(300))
+};
+
+
+//根据凸多面体顶点创建
+PxConvexMesh* createConvexMesh(const PxVec3* verts, const PxU32 numVerts, PxPhysics& physics, PxCooking& cooking)
+{
+	// Create descriptor for convex mesh
+	PxConvexMeshDesc convexDesc;
+	convexDesc.points.count = numVerts;
+	convexDesc.points.stride = sizeof(PxVec3);
+	convexDesc.points.data = verts;
+	convexDesc.flags = PxConvexFlag::eCOMPUTE_CONVEX;
+
+	PxConvexMesh* convexMesh = NULL;
+	PxDefaultMemoryOutputStream buf;
+	//cookConvexMesh用于第一次创建时的调用 可以序列化缓存到本地以便进行高效的探测计算
+	//createConvexMesh功能相同但不会缓存 可用于不参与频繁计算的片元
+	if (cooking.cookConvexMesh(convexDesc, buf))
+	{
+		PxDefaultMemoryInputData id(buf.getData(), buf.getSize());//从序列化数据读取内容
+		convexMesh = physics.createConvexMesh(id);//通过读取的内容在PxPhysics内建立一个片元
+	}
+	return convexMesh;
+}
 
 PxFilterFlags ballFilterShader(
 	PxFilterObjectAttributes attributes0, PxFilterData filterData0,
@@ -116,12 +154,19 @@ PxFilterFlags ballFilterShader(
 		pairFlags|= PxPairFlag::eNOTIFY_TOUCH_FOUND;
 	}
 
+	if ((filterData0.word0 & filterData1.word2) && (filterData1.word0 & filterData0.word2))
+
+	{
+		gScene->removeActor(*dynamicBall);
+		isBall = false;
+		pairFlags |= PxPairFlag::eNOTIFY_TOUCH_FOUND;
+	}
 	return PxFilterFlag::eDEFAULT;
 }
 
 static const PxFilterData collisionGroupBall(1, 1, 1, 1);
-static const PxFilterData collisionGroupObstacle(1, 1, 1, 1);
-
+static const PxFilterData collisionGroupObstacle(1, 1, 0, 1);
+static const PxFilterData collisionGroupSouthWall(1, 1, 1, 1);
 
 //class ContactReportCallback : public PxSimulationEventCallback
 //{
@@ -170,7 +215,7 @@ PxRigidDynamic* createDynamic(const PxTransform& t, const PxGeometry& geometry, 
 }
 
 int score = 0;
-//锟斤拷锟接凤拷锟斤拷1
+//增加分数
 void increaseScore()
 {
 	score++;
@@ -192,7 +237,7 @@ void moveRight(PxRigidDynamic* right) {
 	//left->setAngularVelocity(PxVec3(10000, 0, 10000), true);
 }
 
-//锟斤拷锟斤拷锟截斤拷
+//创建关节
 PxJoint* createMyJoint(PxRigidActor* a0, const PxTransform& t0, PxRigidActor* a1, const PxTransform& t1) {
 	PxRevoluteJoint* j = PxRevoluteJointCreate(*gPhysics, a0, t0, a1, t1);
 	j->setProjectionLinearTolerance(0.1f);
@@ -229,7 +274,7 @@ PxJoint* createDampedD62(PxRigidActor* a0, const PxTransform& t0, PxRigidActor* 
 
 
 bool isBall = false;
-//锟斤拷锟斤拷锟斤拷锟斤拷锟?
+//发射小球
 PxRigidDynamic* createBall(const PxTransform& t, const PxGeometry& geometry, const PxVec3& velocity = PxVec3(100))
 {
 	dynamicBall = PxCreateDynamic(*gPhysics, t, geometry, *gMaterial, 10.0f);
@@ -252,6 +297,20 @@ PxRigidDynamic* createBall(const PxTransform& t, const PxGeometry& geometry, con
 void removeBall() {
 	gScene->removeActor(*dynamicBall);
 	isBall = false;
+}
+
+void create_static(PxVec3 verts[], PxU32 size, PxVec3 globalpos) {
+	gCooking = PxCreateCooking(PX_PHYSICS_VERSION, *gFoundation,
+		PxCookingParams(PxTolerancesScale()));
+	PxRigidStatic* static_ptr = gPhysics->createRigidStatic(PxTransform(globalpos));
+	PxConvexMesh* mesh = createConvexMesh(verts, size, *gPhysics, *gCooking);
+	PxShape* shape = PxRigidActorExt::createExclusiveShape(*static_ptr, PxConvexMeshGeometry(mesh), *gMaterial);
+	//shape->setSimulationFilterData(PxFilterData(COLLISION_FLAG_DRIVABLE_OBSTACLE,
+	//	COLLISION_FLAG_DRIVABLE_OBSTACLE_AGAINST, PxPairFlag::eMODIFY_CONTACTS, 0));
+	PxFilterData qryFilterData;
+	//setupDrivableSurface(qryFilterData);
+	shape->setQueryFilterData(qryFilterData);
+	gScene->addActor(*static_ptr);
 }
 
 void createStack(const PxTransform& t, PxU32 size, PxReal halfExtent)
@@ -306,10 +365,11 @@ void initPhysics(bool interactive)
 	gMaterial = gPhysics->createMaterial(0.5f, 0.98f, 0.98f);
 
 
-	//锟斤拷锟斤拷围墙
+	//创建四周围墙
 	PxRigidStatic* groundPlane = PxCreatePlane(*gPhysics, PxPlane(0,1,0,0), *gMaterial);
 	gScene->addActor(*groundPlane);
 	PxShape* wallShape1 = gPhysics->createShape(PxBoxGeometry(100.0f,5.0f,1.5f), *gMaterial);
+	wallShape1->setSimulationFilterData(collisionGroupSouthWall);//障碍物碰撞标识
 	PxRigidStatic* southWall = PxCreateStatic(*gPhysics, PxTransform(PxVec3(0.0f, 5.0f, 200.0f)), *wallShape1);
 	PxRigidStatic* northWall = PxCreateStatic(*gPhysics, PxTransform(PxVec3(0.0f, 5.0f, -200.0f)), *wallShape1);
 	PxShape* wallShape2 = gPhysics->createShape(PxBoxGeometry(1.5f, 5.0f, 200.0f), *gMaterial);
@@ -320,7 +380,11 @@ void initPhysics(bool interactive)
 	gScene->addActor(*eastWall);
 	gScene->addActor(*northWall);
 
-	//小墙锟斤拷锟斤拷锟?
+
+
+	create_static(test_barrier, 12, PxVec3(-10, 0, 90));
+
+	//小墙做阻隔
 	PxShape* wallShape3 = gPhysics->createShape(PxBoxGeometry(1.0f, 5.0f, 160.0f), *gMaterial);
 	PxRigidStatic* smallWall = PxCreateStatic(*gPhysics, PxTransform(PxVec3(90.0f, 5.0f, 40.0f)), *wallShape3);
 	gScene->addActor(*smallWall);
@@ -331,35 +395,37 @@ void initPhysics(bool interactive)
 	//PxRigidStatic* rightStick = PxCreateStatic(*gPhysics, PxTransform(PxVec3(-100.0f, 10.0f, 0.0f)), *shape2);
 
 
-	//锟斤拷锟斤拷锟斤拷
+	//添加小球
 	//PxRigidDynamic* ball = createDynamic(PxTransform(PxVec3(150.0f, 2.0f, 180.0f)), PxSphereGeometry(4.0f), PxVec3(0.0f, 0.0f, 0.0f));
 	//ball->setRigidDynamicLockFlags( PxRigidDynamicLockFlag::eLOCK_LINEAR_Y);
 	//ball->setActorFlag(PxActorFlag::eDISABLE_GRAVITY, true);
 	//ball->addForce(PxVec3(0, 0, -10000000.0f), PxForceMode::eFORCE, true);
 	//gScene->addActor(*ball);
 
-		//锟较凤拷锟斤拷叩锟斤拷锟斤拷
+	//左上方阻隔
 	PxShape* TopLeftWall = gPhysics->createShape(PxBoxGeometry(55.0f, 5.0f, 2.5f), *gMaterial);
 	PxTransform relativePose3(PxQuat(PxHalfPi*0.33, PxVec3(0, 1, 0)));
 	TopLeftWall->setLocalPose(relativePose3);
 	PxRigidStatic* stick6 = PxCreateStatic(*gPhysics, PxTransform(PxVec3(-52.5f, 5.0f, -175.0f)), *TopLeftWall);
 	gScene->addActor(*stick6);
 
-	//锟较凤拷锟揭边碉拷锟斤拷锟?
+	//右上方阻隔
 	PxShape* TopRightWall = gPhysics->createShape(PxBoxGeometry(50.0f, 5.0f, 2.5f), *gMaterial);
 	PxTransform relativePose4(PxQuat(-0.33*PxHalfPi, PxVec3(0, 1, 0)));
 	TopRightWall->setLocalPose(relativePose4);
 	PxRigidStatic* stick7 = PxCreateStatic(*gPhysics, PxTransform(PxVec3(55.0f, 5.0f, -175.0f)), *TopRightWall);
 	gScene->addActor(*stick7);
 
-	//锟斤拷锟斤拷锟较帮拷
+
+
+	//胶囊障碍
 	PxShape* capsuleShape = gPhysics->createShape(PxCapsuleGeometry(10.0f, 20.0f), *gMaterial);
 	//PxRigidStatic* stick0 = gPhysics->createRigidStatic(PxTransform(PxVec3(10.0f, 0.0f, -70.0f)));
 	PxTransform relativePose(PxQuat(PxHalfPi, PxVec3(0, 0, 1)));
 	capsuleShape->setLocalPose(relativePose);
 	capsuleShape->setSimulationFilterData(collisionGroupObstacle);//障碍物碰撞标识
 
-	//锟斤拷锟斤拷锟较帮拷1
+	//其他障碍物
 	PxRigidStatic* stick1 = PxCreateStatic(*gPhysics, PxTransform(PxVec3(0.0f, 0.0f, 0.0f)), *capsuleShape);
 	//stick->setRigidDynamicLockFlags(PxRigidDynamicLockFlag::eLOCK_LINEAR_Y);
 	gScene->addActor(*stick1);
@@ -392,7 +458,7 @@ void initPhysics(bool interactive)
 	gScene->addActor(*box3);
 	
 	
-	//锟铰凤拷锟揭边碉拷锟斤拷锟?
+	//右边摆臂
 	//PxShape* rightHandWall = gPhysics->createShape(PxBoxGeometry(50.0f, 10.0f, 1.0f), *gMaterial);
 	PxTransform relativePose1(PxQuat(PxHalfPi*0.33, PxVec3(0, 1, 0)));
 	//rightHandWall->setLocalPose(relativePose1);
@@ -402,7 +468,7 @@ void initPhysics(bool interactive)
 	PxVec3 offset(20.0f, 0, 0);
 	PxTransform localTm(offset);
 
-	//锟斤拷锟斤拷锟矫关斤拷实锟斤拷锟揭边摆憋拷
+	//尝试创建右边摆臂
 	PxShape* rightHandWall1 = gPhysics->createShape(PxBoxGeometry(35.0f, 5.0f, 2.5f), *gMaterial);
 	//PxTransform relativePose1(PxQuat(PxHalfPi*0.33, PxVec3(0, 1, 0)));
 	rightHandWall1->setLocalPose(relativePose1);
@@ -417,7 +483,7 @@ void initPhysics(bool interactive)
 	gScene->addActor(*current);
 	
 
-	//锟铰凤拷锟斤拷叩锟斤拷锟斤拷
+	//尝试创建左边摆臂
 	//PxShape* leftHandWall = gPhysics->createShape(PxBoxGeometry(50.0f, 10.0f, 1.0f), *gMaterial);
 	PxTransform relativePose2(PxQuat(-0.33*PxHalfPi, PxVec3(0, 1, 0)));
 	//leftHandWall->setLocalPose(relativePose2);
@@ -426,7 +492,7 @@ void initPhysics(bool interactive)
 	//stick->setRigidDynamicLockFlags(PxRigidDynamicLockFlag::eLOCK_LINEAR_Y);
 
 
-	//锟斤拷锟斤拷锟矫关斤拷实锟斤拷锟斤拷甙诒锟?
+	//尝试创建左边摆臂
 	PxShape* leftHandWall1 = gPhysics->createShape(PxBoxGeometry(35.0f, 5.0f, 2.5f), *gMaterial);
 	//PxTransform relativePose1(PxQuat(PxHalfPi*0.33, PxVec3(0, 1, 0)));
 	leftHandWall1->setLocalPose(relativePose2);
@@ -448,14 +514,14 @@ void initPhysics(bool interactive)
 	//for(PxU32 i=0;i<5;i++)
 	//createStack(PxTransform(PxVec3(0,0,stackZ-=10.0f)), 10, 2.0f);
 
-	//锟斤拷锟斤拷小锟斤拷
+	//发射小球
 	if(!interactive)
 		createDynamic(PxTransform(PxVec3(0,40,100)), PxSphereGeometry(10), PxVec3(0,0,0.1f));
 
 
 }
 
-//锟斤拷图锟斤拷始锟斤拷
+//创建地图
 void createMap() {
 
 }
@@ -468,7 +534,7 @@ void stepPhysics(bool interactive)
 
 	gScene->simulate(1.0f/60.0f);
 	gScene->fetchResults(true);
-	//锟斤拷锟斤拷指锟斤拷锟斤拷锟斤拷之锟斤拷gScene->removeActor()小锟斤拷
+
 
 
 
@@ -503,8 +569,8 @@ void keyPress(unsigned char key, const PxTransform& camera)
 		
 	}
 				break;
-	case 'Q':   moveLeft(current1); break;//锟斤拷诒锟?
-	case 'E':   moveRight(current); break;//锟揭摆憋拷
+	case 'Q':   moveLeft(current1); break;//左摆臂
+	case 'E':   moveRight(current); break;//右摆臂
 	case 'I':   increaseScore(); break;
 	case 'U':   removeBall(); break;
 			/***default:
