@@ -62,7 +62,7 @@ using namespace std;
 
 
 
-
+PxCooking*				gCooking = NULL;
 PxDefaultAllocator	gAllocator;
 PxDefaultErrorCallback gErrorCallback;
 
@@ -549,7 +549,7 @@ void initPhysics(bool interactive)
 // 地图初始化
 void createMap() {
 
-
+}
 void stepPhysics(bool interactive)
 {
 	PX_UNUSED(interactive);
