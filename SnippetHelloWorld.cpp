@@ -103,6 +103,45 @@ PxRigidDynamic* moveBox = NULL;
 
 PxReal stackZ = 10.0f;
 
+PxVec3 test_barrier[] = {
+	PxVec3(0,0,0),
+	PxVec3(10,0,0),
+	PxVec3(-5,0,sqrt(75)),
+	PxVec3(0,0,sqrt(300)),
+	PxVec3(15,0,sqrt(75)),
+	PxVec3(10,0,sqrt(300)),
+
+	PxVec3(0,10,0),
+	PxVec3(10,10,0),
+	PxVec3(-5,10,sqrt(75)),
+	PxVec3(0,10,sqrt(300)),
+	PxVec3(15,10,sqrt(75)),
+	PxVec3(10,10,sqrt(300))
+};
+
+
+//根据凸多面体顶点创建
+PxConvexMesh* createConvexMesh(const PxVec3* verts, const PxU32 numVerts, PxPhysics& physics, PxCooking& cooking)
+{
+	// Create descriptor for convex mesh
+	PxConvexMeshDesc convexDesc;
+	convexDesc.points.count = numVerts;
+	convexDesc.points.stride = sizeof(PxVec3);
+	convexDesc.points.data = verts;
+	convexDesc.flags = PxConvexFlag::eCOMPUTE_CONVEX;
+
+	PxConvexMesh* convexMesh = NULL;
+	PxDefaultMemoryOutputStream buf;
+	//cookConvexMesh用于第一次创建时的调用 可以序列化缓存到本地以便进行高效的探测计算
+	//createConvexMesh功能相同但不会缓存 可用于不参与频繁计算的片元
+	if (cooking.cookConvexMesh(convexDesc, buf))
+	{
+		PxDefaultMemoryInputData id(buf.getData(), buf.getSize());//从序列化数据读取内容
+		convexMesh = physics.createConvexMesh(id);//通过读取的内容在PxPhysics内建立一个片元
+	}
+	return convexMesh;
+}
+
 PxFilterFlags ballFilterShader(
 	PxFilterObjectAttributes attributes0, PxFilterData filterData0,
 	PxFilterObjectAttributes attributes1, PxFilterData filterData1,
@@ -126,11 +165,20 @@ PxFilterFlags ballFilterShader(
 		pairFlags|= PxPairFlag::eNOTIFY_TOUCH_FOUND;
 	}
 
+	if ((filterData0.word0 & filterData1.word2) && (filterData1.word0 & filterData0.word2))
+
+	{
+		gScene->removeActor(*dynamicBall);
+		isBall = false;
+		pairFlags |= PxPairFlag::eNOTIFY_TOUCH_FOUND;
+	}
+
 	return PxFilterFlag::eDEFAULT;
 }
 
 static const PxFilterData collisionGroupBall(1, 1, 1, 1);
-static const PxFilterData collisionGroupObstacle(1, 1, 1, 1);
+static const PxFilterData collisionGroupObstacle(1, 1,0, 1);
+static const PxFilterData collisionGroupSouthWall(1, 0, 1, 1);
 
 
 //class ContactReportCallback : public PxSimulationEventCallback
@@ -261,6 +309,20 @@ PxRigidDynamic* createBall(const PxTransform& t, const PxGeometry& geometry, con
 void removeBall() {
 	gScene->removeActor(*dynamicBall);
 	isBall = false;
+}
+
+void create_static(PxVec3 verts[], PxU32 size, PxVec3 globalpos) {
+	gCooking = PxCreateCooking(PX_PHYSICS_VERSION, *gFoundation,
+		PxCookingParams(PxTolerancesScale()));
+	PxRigidStatic* static_ptr = gPhysics->createRigidStatic(PxTransform(globalpos));
+	PxConvexMesh* mesh = createConvexMesh(verts, size, *gPhysics, *gCooking);
+	PxShape* shape = PxRigidActorExt::createExclusiveShape(*static_ptr, PxConvexMeshGeometry(mesh), *gMaterial);
+	//shape->setSimulationFilterData(PxFilterData(COLLISION_FLAG_DRIVABLE_OBSTACLE,
+	//	COLLISION_FLAG_DRIVABLE_OBSTACLE_AGAINST, PxPairFlag::eMODIFY_CONTACTS, 0));
+	PxFilterData qryFilterData;
+	//setupDrivableSurface(qryFilterData);
+	shape->setQueryFilterData(qryFilterData);
+	gScene->addActor(*static_ptr);
 }
 
 void createStack(const PxTransform& t, PxU32 size, PxReal halfExtent)

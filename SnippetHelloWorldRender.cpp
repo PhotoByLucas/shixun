@@ -1,5 +1,5 @@
-
-//
+ï»¿
+// æµ‹è¯•
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions
 // are met:
@@ -86,7 +86,7 @@ void renderCallback()
 	Snippets::renderText(5, 90, "Press Q/E to hit the ball.", 25);
 	Snippets::renderText(5, 84, "Your score:", 12);
 
-	//ÔÚÆÁÄ»ÉÏ´òÓ¡·ÖÊı
+	//åœ¨å±å¹•ä¸Šæ‰“å°åˆ†æ•°
 	string scoreString = to_string(score);
 	char c[100];
 	strcpy(c, scoreString.data());
@@ -104,7 +104,7 @@ void renderCallback()
 		Snippets::renderActors(&actors[2], static_cast<PxU32>(1), true, PxVec3(1.0f, 1.0f, 1.0f));
 		Snippets::renderActors(&actors[3], static_cast<PxU32>(1), true, PxVec3(1.0f, 1.0f, 1.0f));
 		Snippets::renderActors(&actors[4], static_cast<PxU32>(1), true, PxVec3(1.0f, 1.0f, 1.0f));
-		Snippets::renderActors(&actors[5], static_cast<PxU32>(1), true, PxVec3(1.0f, 1.0f, 1.0f));
+		Snippets::renderActors(&actors[5], static_cast<PxU32>(1), true, PxVec3(0.5f,0.5f,0.5f));
 		Snippets::renderActors(&actors[6], static_cast<PxU32>(1), true, PxVec3(0.5f, 0.5f, 0.5f));
 		Snippets::renderActors(&actors[7], static_cast<PxU32>(1), true, PxVec3(0.5f, 0.5f, 0.5f));
 		Snippets::renderActors(&actors[8], static_cast<PxU32>(actors.size()-8), true, PxVec3(0.75f, 0.75f, 0.75f));
