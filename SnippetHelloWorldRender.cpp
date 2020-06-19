@@ -104,7 +104,7 @@ void renderCallback()
 		Snippets::renderActors(&actors[2], static_cast<PxU32>(1), true, PxVec3(1.0f, 1.0f, 1.0f));
 		Snippets::renderActors(&actors[3], static_cast<PxU32>(1), true, PxVec3(1.0f, 1.0f, 1.0f));
 		Snippets::renderActors(&actors[4], static_cast<PxU32>(1), true, PxVec3(1.0f, 1.0f, 1.0f));
-		Snippets::renderActors(&actors[5], static_cast<PxU32>(1), true, PxVec3(0.27f, 0.27f, 0.27f));
+		Snippets::renderActors(&actors[5], static_cast<PxU32>(1), true, PxVec3(0.5f,0.5f,0.5f));
 		Snippets::renderActors(&actors[6], static_cast<PxU32>(1), true, PxVec3(0.5f, 0.5f, 0.5f));
 		Snippets::renderActors(&actors[7], static_cast<PxU32>(1), true, PxVec3(0.5f, 0.5f, 0.5f));
 		Snippets::renderActors(&actors[8], static_cast<PxU32>(actors.size()-8), true, PxVec3(0.75f, 0.75f, 0.75f));
