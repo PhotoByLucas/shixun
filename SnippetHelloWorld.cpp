@@ -1,100 +1,4 @@
-<<<<<<< HEAD
-﻿// 谁是内鬼大作战
-// Redistribution and use in source and binary forms, with or without
-// modification, are permitted provided that the following conditions
-// are met:
-//  * Redistributions of source code must retain the above copyright
-//    notice, this list of conditions and the following disclaimer.
-//  * Redistributions in binary form must reproduce the above copyright
-//    notice, this list of conditions and the following disclaimer in the
-//    documentation and/or other materials provided with the distribution.
-//  * Neither the name of NVIDIA CORPORATION nor the names of its
-//    contributors may be used to endorse or promote products derived
-//    from this software without specific prior written permission.
-//
-// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS ``AS IS'' AND ANY
-// EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-// PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT OWNER OR
-// CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
-// EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
-// PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
-// PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
-// OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-// (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-// OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-//
-// Copyright (c) 2008-2018 NVIDIA Corporation. All rights reserved.
-// Copyright (c) 2004-2008 AGEIA Technologies, Inc. All rights reserved.
-// Copyright (c) 2001-2004 NovodeX AG. All rights reserved.  
 
-// ****************************************************************************
-// This snippet illustrates simple use of physx
-//
-// It creates a number of box stacks on a plane, and if rendering, allows the
-// user to create new stacks and fire a ball from the camera position
-// ****************************************************************************
-
-
-
-
-
-#include <ctype.h>
-
-#include "PxPhysicsAPI.h"
-
-#include "foundation/PxMemory.h"
-
-
-#include "../SnippetCommon/SnippetPrint.h"
-#include "../SnippetCommon/SnippetPVD.h"
-#include "../SnippetUtils/SnippetUtils.h"
-#include "PsArray.h"
-#include "PxImmediateMode.h"
-#include "extensions/PxMassProperties.h"
-
-#include "score.h"
-#include "math.h"
-#include <iostream>
-#include <vector>
-
-using namespace physx;
-using namespace std;
-
-
-
-
-PxCooking*				gCooking = NULL;
-PxDefaultAllocator	gAllocator;
-PxDefaultErrorCallback gErrorCallback;
-
-PxFoundation*	gFoundation = NULL;
-PxPhysics*	gPhysics	= NULL;
-
-PxDefaultCpuDispatcher*	gDispatcher = NULL;
-PxScene*	gScene= NULL;
-
-
-PxMaterial*	gMaterial	= NULL;
-
-PxPvd* gPvd= NULL;
-
-PxRigidDynamic* dynamicBall = NULL;
-
-PxRigidStatic* plane;
-
-
-
-std::vector<PxVec3> gContactPositions;
-std::vector<PxVec3> gContactImpulses;
-
-PxRigidDynamic* current = NULL;
-PxRigidDynamic* current1 = NULL;
-
-PxReal stackZ = 10.0f;
-
-
-=======
 
 //花宝
 // Redistribution and use in source and binary forms, with or without
@@ -200,7 +104,7 @@ PxRigidDynamic* moveBox = NULL;
 PxReal stackZ = 10.0f;
 
 
->>>>>>> liuhaohua
+
 PxVec3 test_barrier[] = {
 	PxVec3(0,0,0),
 	PxVec3(10,0,0),
