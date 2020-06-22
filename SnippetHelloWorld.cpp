@@ -34,9 +34,9 @@
 // user to create new stacks and fire a ball from the camera position
 // ****************************************************************************
 
-
-
-
+#include<Windows.h>
+#include<mmsystem.h>
+#pragma comment(lib,"winmm.lib")
 
 #include <ctype.h>
 
@@ -394,6 +394,7 @@ void createMap2() {
 
 void initPhysics(bool interactive)
 {
+	//PlaySound((char*)"G:\\shixun\\PhysX-3.4-master\\PhysX-3.4-master\\PhysX_3.4\\Snippets\\SnippetHelloWorld\\music.wav", NULL, SND_ASYNC | SND_LOOP);//bgm,要绝对路径
 	gFoundation = PxCreateFoundation(PX_FOUNDATION_VERSION, gAllocator, gErrorCallback);
 
 	gPvd = PxCreatePvd(*gFoundation);
@@ -543,6 +544,8 @@ void initPhysics(bool interactive)
 	if(!interactive)
 		createDynamic(PxTransform(PxVec3(0,40,100)), PxSphereGeometry(10), PxVec3(0,0,0.1f));
 
+	//mciSendString(L"open ./bgm.mp3 alias bgm", 0, 0, 0);//打开音乐
+	//mciSendString(L"open bgm repeat", 0, 0, 0);//播放音乐
 
 }
 
