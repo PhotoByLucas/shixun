@@ -394,7 +394,7 @@ void createMap2() {
 
 void initPhysics(bool interactive)
 {
-	//PlaySound((char*)"G:\\shixun\\PhysX-3.4-master\\PhysX-3.4-master\\PhysX_3.4\\Snippets\\SnippetHelloWorld\\music.wav", NULL, SND_ASYNC | SND_LOOP);//bgm,要绝对路径
+	PlaySound((char*)"G:\\shixun\\PhysX-3.4-master\\PhysX-3.4-master\\PhysX_3.4\\Snippets\\SnippetHelloWorld\\music.wav", NULL, SND_ASYNC | SND_LOOP);//bgm,要绝对路径
 	gFoundation = PxCreateFoundation(PX_FOUNDATION_VERSION, gAllocator, gErrorCallback);
 
 	gPvd = PxCreatePvd(*gFoundation);
