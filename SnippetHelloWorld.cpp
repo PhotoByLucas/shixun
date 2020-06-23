@@ -483,6 +483,11 @@ void createMap3() {
 	moveBox->setActorFlag(PxActorFlag::eDISABLE_GRAVITY, true);
 	//moveBox->setRigidBodyFlag(PxRigidBodyFlag::eKINEMATIC, true);
 	PxRigidBodyExt::updateMassAndInertia(*moveBox, 100000.0f);
+	moveBox->setRigidDynamicLockFlags(
+		PxRigidDynamicLockFlag::eLOCK_LINEAR_Y |
+		PxRigidDynamicLockFlag::eLOCK_ANGULAR_X |
+		PxRigidDynamicLockFlag::eLOCK_ANGULAR_Z
+	);
 }
 void initPhysics(bool interactive)
 {
