@@ -459,7 +459,7 @@ void createMap2() {
 	moveBox2->setAngularDamping(0.f);
 	moveBox2->setActorFlag(PxActorFlag::eDISABLE_GRAVITY, true);
 	//moveBox->setRigidBodyFlag(PxRigidBodyFlag::eKINEMATIC, true);
-	PxRigidBodyExt::updateMassAndInertia(*moveBox2, 100000.0f);
+	PxRigidBodyExt::updateMassAndInertia(*moveBox2, 10000000.0f);
 
 	moveBox2->setRigidDynamicLockFlags(
 		PxRigidDynamicLockFlag::eLOCK_LINEAR_Y |
