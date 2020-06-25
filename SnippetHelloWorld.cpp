@@ -498,8 +498,8 @@ void createMap3() {
 	gScene->removeActor(*moveBox2);
 	gScene->removeActor(*stick1);
 	//create_static(test_barrier, 12, PxVec3(-10, 0, -50));
-	create_static(test_barrier1, 12, PxVec3(35, 0, -50));
-	create_static(test_barrier1, 12, PxVec3(-55, 0, -50));
+	create_static(test_barrier1, 12, PxVec3(45, 0, -50));
+	create_static(test_barrier1, 12, PxVec3(-65, 0, -50));
 	moveBox = createDynamic(PxTransform(PxVec3(-5.0f, 4.0f, 50.0f)), PxBoxGeometry(4.0f, 4.0f, 30.0f), PxVec3(0.0f, 0.0f, 0.0f));
 	moveBox->setAngularVelocity(PxVec3(0.0f, .5f, 0.0f));
 	moveBox->setAngularDamping(0.f);
