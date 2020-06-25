@@ -37,7 +37,7 @@
 #include<Windows.h>
 #include<mmsystem.h>
 #pragma comment(lib,"winmm.lib")
-
+#include <ctime>
 #include <ctype.h>
 
 #include "PxPhysicsAPI.h"
@@ -364,6 +364,24 @@ void create_static(PxVec3 verts[], PxU32 size, PxVec3 globalpos) {
 	gScene->addActor(*static_ptr);
 }
 
+void create_random() {
+	PxVec3 random_pos;
+	srand((int)time(0));  // 产生随机种子  把0换成NULL也行
+	float f[3] = {};
+	for (int i = 0; i < 3; i++)
+	{
+		f[i] = -30+rand() % 60 ;
+		cout << f[i]<<endl;
+	}
+	random_pos = PxVec3(f[0],4.0f, f[2]);
+	PxShape* shape = gPhysics->createShape(PxBoxGeometry(4.0f,4.0f,4.0f), *gMaterial);
+	shape->setSimulationFilterData(collisionGroupObstacle);//障碍物碰撞标识	
+	PxRigidDynamic* random_ptr = gPhysics->createRigidDynamic(PxTransform(random_pos));	
+	random_ptr->attachShape(*shape);
+	random_ptr->setActorFlag(PxActorFlag::eDISABLE_GRAVITY, true);
+	gScene->addActor(*random_ptr);
+}
+
 void createStack(const PxTransform& t, PxU32 size, PxReal halfExtent)
 {
 	PxShape* shape = gPhysics->createShape(PxBoxGeometry(halfExtent, halfExtent, halfExtent), *gMaterial);
@@ -386,13 +404,14 @@ void createStack(const PxTransform& t, PxU32 size, PxReal halfExtent)
 
 void createMap1() {
 	//胶囊障碍
+	create_random();
 	PxShape* capsuleShape = gPhysics->createShape(PxCapsuleGeometry(10.0f, 20.0f), *gMaterial);
 	//PxRigidStatic* stick0 = gPhysics->createRigidStatic(PxTransform(PxVec3(10.0f, 0.0f, -70.0f)));
 	PxTransform relativePose(PxQuat(PxHalfPi, PxVec3(0, 0, 1)));
 	capsuleShape->setLocalPose(relativePose);
-	capsuleShape->setSimulationFilterData(collisionGroupObstacle);//障碍物碰撞标识
+	//capsuleShape->setSimulationFilterData(collisionGroupObstacle);//障碍物碰撞标识
 	//其他障碍
-	stick1 = PxCreateStatic(*gPhysics, PxTransform(PxVec3(0.0f, 0.0f, 0.0f)), *capsuleShape);
+	stick1 = PxCreateStatic(*gPhysics, PxTransform(PxVec3(0.0f, 0.0f, -100.0f)), *capsuleShape);
 	//stick->setRigidDynamicLockFlags(PxRigidDynamicLockFlag::eLOCK_LINEAR_Y);
 	gScene->addActor(*stick1);
 	stick2 = PxCreateStatic(*gPhysics, PxTransform(PxVec3(0.0f, 0.0f, 50.0f)), *capsuleShape);
@@ -413,6 +432,7 @@ void createMap1() {
 	gScene->addActor(*box3);
 }
 void createMap2() {
+
 	gScene->removeActor(*stick1);
 	gScene->removeActor(*stick2);
 	gScene->removeActor(*stick3);
@@ -424,7 +444,7 @@ void createMap2() {
 	capsuleShape->setLocalPose(relativePose);
 	capsuleShape->setSimulationFilterData(collisionGroupObstacle);//障碍物碰撞标识
 	//其他障碍
-	stick1 = PxCreateStatic(*gPhysics, PxTransform(PxVec3(0.0f, 0.0f, 0.0f)), *capsuleShape);
+	stick1 = PxCreateStatic(*gPhysics, PxTransform(PxVec3(50.0f, 0.0f, 0.0f)), *capsuleShape);
 	//stick->setRigidDynamicLockFlags(PxRigidDynamicLockFlag::eLOCK_LINEAR_Y);
 	gScene->addActor(*stick1);
 	//PxShape* boxShape = gPhysics->createShape(PxBoxGeometry(10.0f, 10.0f, 10.0f), *gMaterial);
@@ -479,8 +499,8 @@ void createMap3() {
 	gScene->removeActor(*stick1);
 	//create_static(test_barrier, 12, PxVec3(-10, 0, -50));
 	create_static(test_barrier1, 12, PxVec3(35, 0, -50));
-	create_static(test_barrier1, 12, PxVec3(-35, 0, 0));
-	moveBox = createDynamic(PxTransform(PxVec3(40.0f, 4.0f, 50.0f)), PxBoxGeometry(4.0f, 4.0f, 20.0f), PxVec3(0.0f, 0.0f, 0.0f));
+	create_static(test_barrier1, 12, PxVec3(-55, 0, -50));
+	moveBox = createDynamic(PxTransform(PxVec3(-5.0f, 4.0f, 50.0f)), PxBoxGeometry(4.0f, 4.0f, 30.0f), PxVec3(0.0f, 0.0f, 0.0f));
 	moveBox->setAngularVelocity(PxVec3(0.0f, .5f, 0.0f));
 	moveBox->setAngularDamping(0.f);
 	moveBox->setActorFlag(PxActorFlag::eDISABLE_GRAVITY, true);
@@ -491,11 +511,21 @@ void createMap3() {
 		PxRigidDynamicLockFlag::eLOCK_ANGULAR_X |
 		PxRigidDynamicLockFlag::eLOCK_ANGULAR_Z
 	);
+	moveBox1 = createDynamic(PxTransform(PxVec3(-5.0f, 4.0f, -100.0f)), PxBoxGeometry(4.0f, 4.0f, 20.0f), PxVec3(0.0f, 0.0f, 0.0f));
+	moveBox1->setAngularVelocity(PxVec3(0.0f, .5f, 0.0f));
+	moveBox1->setAngularDamping(0.f);
+	moveBox1->setActorFlag(PxActorFlag::eDISABLE_GRAVITY, true);
+	//moveBox->setRigidBodyFlag(PxRigidBodyFlag::eKINEMATIC, true);
+	PxRigidBodyExt::updateMassAndInertia(*moveBox1, 100000.0f);
+	moveBox1->setRigidDynamicLockFlags(
+		PxRigidDynamicLockFlag::eLOCK_LINEAR_Y |
+		PxRigidDynamicLockFlag::eLOCK_ANGULAR_X |
+		PxRigidDynamicLockFlag::eLOCK_ANGULAR_Z
+	);
 }
 void initPhysics(bool interactive)
 {
 	//PlaySound((char*)"G:\\shixun\\PhysX-3.4-master\\PhysX-3.4-master\\PhysX_3.4\\Snippets\\SnippetHelloWorld\\music.wav", NULL, SND_ASYNC | SND_LOOP);//bgm,要绝对路径
-	PlaySound((char*)"C:\\Users\\Administrator.DESKTOP-P0ESJRB\\Desktop\\Big Project\\PhysX-3.4-master\\PhysX_3.4\\Snippets\\SnippetHelloWorld\\music.wav", NULL, SND_ASYNC | SND_LOOP);
 	gFoundation = PxCreateFoundation(PX_FOUNDATION_VERSION, gAllocator, gErrorCallback);
 
 	gPvd = PxCreatePvd(*gFoundation);
