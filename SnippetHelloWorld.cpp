@@ -186,6 +186,7 @@ PxFilterFlags ballFilterShader(
 
 		gScene->removeActor(*dynamicBall);
 		isBall = false;
+		score = 0;
 		pairFlags |= PxPairFlag::eNOTIFY_TOUCH_FOUND;
 	}
 
@@ -468,6 +469,10 @@ void createMap3() {
 	moveBox1->setActorFlag(PxActorFlag::eDISABLE_GRAVITY, true);
 	//moveBox->setRigidBodyFlag(PxRigidBodyFlag::eKINEMATIC, true);
 	PxRigidBodyExt::updateMassAndInertia(*moveBox1, 100000.0f);
+
+	PxShape* dynamicMoveBox1 = PxRigidActorExt::createExclusiveShape(*moveBox1, PxBoxGeometry(4.0f, 4.0f, 20.0f), *moveBoxMaterial);
+	dynamicMoveBox1->setSimulationFilterData(collisionGroupBox);//障碍物碰撞标识
+
 	moveBox1->setRigidDynamicLockFlags(
 		PxRigidDynamicLockFlag::eLOCK_LINEAR_Y |
 		PxRigidDynamicLockFlag::eLOCK_ANGULAR_X |
@@ -647,8 +652,12 @@ void stepPhysics(bool interactive)
 		MessageBox(0, "Congratulations on reaching the points you need to enter the next level. \nYou will enter the final level", "Congratulations", 0);
 		removeBall();
 		createMap3();
-		maxScore = 999;
+		maxScore = 150;
 		level = 3;
+	}
+	if (score >= 150 && level == 3) {
+		MessageBox(0, "Congratulations on your success", "Congratulations", 0);
+		exit(100);
 	}
 	randomTime++;
 	if (randomTime == 4000) {
