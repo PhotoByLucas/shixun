@@ -86,7 +86,7 @@ namespace
 		Snippets::renderText(5, 96, "Press T to launch a ball.", 25);
 		Snippets::renderText(5, 90, "Press Q/E to hit the ball.", 25);
 		Snippets::renderText(60, 96, "Your score:", 12);
-		Snippets::renderText(70, 90, "Level:", 10);
+		Snippets::renderText(70, 90, "Level:", 6);
 
 		//在屏幕上打印分数
 		string scoreString = to_string(score);

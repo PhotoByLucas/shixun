@@ -452,6 +452,7 @@ void createMap2() {
 	//PxShape* boxShape = gPhysics->createShape(PxBoxGeometry(10.0f, 10.0f, 10.0f), *gMaterial);
 	//box = PxCreateStatic(*gPhysics, PxTransform(PxVec3(40.0f, 10.0f, 50.0f)), *boxShape);
 	//gScene->addActor(*box);
+
 	//box1 = PxCreateStatic(*gPhysics, PxTransform(PxVec3(-40.0f, 10.0f, 50.0f)), *boxShape);
 	//gScene->addActor(*box1);
 	moveBox = createDynamic(PxTransform(PxVec3(40.0f, 4.1f, 50.0f)), PxBoxGeometry(4.0f, 4.0f, 20.0f), PxVec3(0.0f, 0.0f, 0.0f));
