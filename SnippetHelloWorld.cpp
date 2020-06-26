@@ -38,6 +38,11 @@
 #include<mmsystem.h>
 #pragma comment(lib,"winmm.lib")
 
+
+#include <conio.h>
+// 引用 Windows Multimedia API
+
+
 #include <ctype.h>
 
 #include "PxPhysicsAPI.h"
@@ -162,28 +167,12 @@ PxConvexMesh* createConvexMesh(const PxVec3* verts, const PxU32 numVerts, PxPhys
 	}
 	return convexMesh;
 }
-static PxFilterFlags filterShader(
-	PxFilterObjectAttributes attributes0,
-	PxFilterData filterData0,
-	PxFilterObjectAttributes attributes1,
-	PxFilterData filterData1,
-	PxPairFlags& pairFlags,
-	const void* constantBlock,
-	PxU32 constantBlockSize)
-{
-	pairFlags = PxPairFlag::eSOLVE_CONTACT;
-	pairFlags |= PxPairFlag::eDETECT_DISCRETE_CONTACT;
-	pairFlags |= PxPairFlag::eDETECT_CCD_CONTACT;
-	return PxFilterFlags();
-}
+
 PxFilterFlags ballFilterShader(
 	PxFilterObjectAttributes attributes0, PxFilterData filterData0,
 	PxFilterObjectAttributes attributes1, PxFilterData filterData1,
 	PxPairFlags& pairFlags, const void* constantBlock, PxU32 constantBlockSize)
 {
-	pairFlags = PxPairFlag::eSOLVE_CONTACT;
-	pairFlags |= PxPairFlag::eDETECT_DISCRETE_CONTACT;
-	pairFlags |= PxPairFlag::eDETECT_CCD_CONTACT;
 	// let triggers through
 	if (PxFilterObjectIsTrigger(attributes0) || PxFilterObjectIsTrigger(attributes1))
 	{
@@ -195,65 +184,67 @@ PxFilterFlags ballFilterShader(
 
 	// trigger the contact callback for pairs (A,B) where 
 	// the filtermask of A contains the ID of B and vice versa.
+	//if ((filterData0.word1 & filterData1.word1 == 0) && (filterData0.word2 & filterData1.word2 == 0) && (filterData0.word3 & filterData1.word3 == 1))//下面墙的检测
+	//{
+	//	gScene->removeActor(*dynamicBall);
+	//	isBall = false;
+	//	pairFlags |= PxPairFlag::eNOTIFY_TOUCH_FOUND;
+	//}
+
+	//if ((filterData0.word1 & filterData1.word1 == 0)&& (filterData0.word2 & filterData1.word2 ==1 )&& (filterData0.word3 & filterData1.word3 == 0))//胶囊体的检测
+	//{
+	//	score += 5;
+	//	pairFlags|= PxPairFlag::eNOTIFY_TOUCH_FOUND;
+	//}
+
+	//if ((filterData0.word1 & filterData1.word1 == 0) && (filterData0.word2 & filterData1.word2 == 1) && (filterData0.word3 & filterData1.word3 == 1))//box的检测
+	//{
+	//	score += 2;
+	//	pairFlags |= PxPairFlag::eNOTIFY_TOUCH_FOUND;
+	//}
+
+	//if ((filterData0.word1 & filterData1.word1 == 1) && (filterData0.word2 & filterData1.word2 == 0) && (filterData0.word3 & filterData1.word3 == 0))//moveBox的检测
+	//{
+	//	score += 7;
+	//	pairFlags |= PxPairFlag::eNOTIFY_TOUCH_FOUND;
+	//}
+
 	if ((filterData0.word0 & filterData1.word1) && (filterData1.word0 & filterData0.word1))
-
-	{
-		score += 5;
-		pairFlags|= PxPairFlag::eNOTIFY_TOUCH_FOUND;
-	}
-
-	if ((filterData0.word0 & filterData1.word2) && (filterData1.word0 & filterData0.word2))
-
 	{
 		gScene->removeActor(*dynamicBall);
 		isBall = false;
 		pairFlags |= PxPairFlag::eNOTIFY_TOUCH_FOUND;
 	}
 
-	return PxFilterFlags();
+	if ((filterData0.word0 & filterData1.word2) && (filterData1.word0 & filterData0.word2))
+	{
+		score += 1;
+		pairFlags |= PxPairFlag::eNOTIFY_TOUCH_FOUND;
+	}
 
+	if ((filterData0.word0 & filterData1.word3) && (filterData1.word0 & filterData0.word3))
+	{
+		score += 2;
+		pairFlags |= PxPairFlag::eNOTIFY_TOUCH_FOUND;
+	}
+
+	return PxFilterFlag::eDEFAULT;
 }
 
+//static const PxFilterData collisionGroupBall(1, 1, 1, 1);
+//static const PxFilterData collisionGroupSouthWall(0, 0, 0, 1);
+//static const PxFilterData collisionGroupCapsule(0, 0,1, 0);
+//static const PxFilterData collisionGroupCapsule1(0, 0, 1, 0);
+//static const PxFilterData collisionGroupBox(0 ,0 , 1 , 1);
+//static const PxFilterData collisionGroupMoveBox(0,1, 0, 0);
+
 static const PxFilterData collisionGroupBall(1, 1, 1, 1);
-static const PxFilterData collisionGroupObstacle(1, 1,0, 1);
-static const PxFilterData collisionGroupSouthWall(1, 0, 1, 1);
-
-
-//class ContactReportCallback : public PxSimulationEventCallback
-//{
-//	void onConstraintBreak(PxConstraintInfo* constraints, PxU32 count) { PX_UNUSED(constraints); PX_UNUSED(count); }
-//	void onWake(PxActor** actors, PxU32 count) { PX_UNUSED(actors); PX_UNUSED(count); }
-//	void onSleep(PxActor** actors, PxU32 count) { PX_UNUSED(actors); PX_UNUSED(count); }
-//	void onTrigger(PxTriggerPair* pairs, PxU32 count) { PX_UNUSED(pairs); PX_UNUSED(count); }
-//	void onAdvance(const PxRigidBody*const*, const PxTransform*, const PxU32) {}
-//	void onContact(const PxContactPairHeader& pairHeader, const PxContactPair* pairs, PxU32 nbPairs)
-//	{
-//		PX_UNUSED((pairHeader));
-//		std::vector<PxContactPairPoint> contactPoints;
-//
-//		for (PxU32 i = 0; i < nbPairs; i++)
-//		{
-//			PxU32 contactCount = pairs[i].contactCount;
-//			if (contactCount)
-//			{
-//				contactPoints.resize(contactCount);
-//				pairs[i].extractContacts(&contactPoints[0], contactCount);
-//
-//				for (PxU32 j = 0; j < contactCount; j++)
-//				{
-//					gContactPositions.push_back(contactPoints[j].position);
-//					gContactImpulses.push_back(contactPoints[j].impulse);
-//				}
-//			}
-//		}
-//	}
-//};
-
-//ContactReportCallback gContactReportCallback;
+static const PxFilterData collisionGroupSouthWall(1,1 , 0, 0);
+static const PxFilterData collisionGroupCapsule(1, 0, 1, 0);
+static const PxFilterData collisionGroupBox(1, 0, 0, 1);
 
 PxRigidDynamic* createDynamic(const PxTransform& t, const PxGeometry& geometry, const PxVec3& velocity=PxVec3(100))
 {
-
 	PxRigidDynamic* dynamic = PxCreateDynamic(*gPhysics, t, geometry, *gMaterial, 10.0f);
 	dynamic->setAngularDamping(0.5f);
 	dynamic->setLinearVelocity(velocity);
@@ -337,8 +328,8 @@ PxRigidDynamic* createBall(const PxTransform& t, const PxGeometry& geometry, con
 	//dynamicBall->setMass(1.0f);
 	//dynamic->addForce(PxVec3(1, 0, 0),physx::PxForceMode::eFORCE , true);
 	//dynamic->setAngularVelocity(velocity);
-	PxShape* dynamicBallShape = PxRigidActorExt::createExclusiveShape(*dynamicBall, geometry, *wallMaterial);
-	dynamicBallShape->setSimulationFilterData(collisionGroupBall);//小球物碰撞标识
+	PxShape* dynamicBallShape = PxRigidActorExt::createExclusiveShape(*dynamicBall, geometry, *gMaterial);
+	dynamicBallShape->setSimulationFilterData(collisionGroupBall);//小球碰撞标识
 	gScene->addActor(*dynamicBall);
 	isBall = true;
 	
@@ -390,7 +381,7 @@ void createMap1() {
 	//PxRigidStatic* stick0 = gPhysics->createRigidStatic(PxTransform(PxVec3(10.0f, 0.0f, -70.0f)));
 	PxTransform relativePose(PxQuat(PxHalfPi, PxVec3(0, 0, 1)));
 	capsuleShape->setLocalPose(relativePose);
-	capsuleShape->setSimulationFilterData(collisionGroupObstacle);//障碍物碰撞标识
+	capsuleShape->setSimulationFilterData(collisionGroupCapsule);//障碍物碰撞标识
 	//其他障碍
 	stick1 = PxCreateStatic(*gPhysics, PxTransform(PxVec3(0.0f, 0.0f, 0.0f)), *capsuleShape);
 	//stick->setRigidDynamicLockFlags(PxRigidDynamicLockFlag::eLOCK_LINEAR_Y);
@@ -407,11 +398,13 @@ void createMap1() {
 	PxShape* boxShape1 = gPhysics->createShape(PxBoxGeometry(10.0f, 10.0f, 10.0f), *gMaterial);
 	PxTransform relativePose5(PxQuat(PxHalfPi*0.5, PxVec3(0, 1, 0)));
 	boxShape1->setLocalPose(relativePose5);
+	boxShape1->setSimulationFilterData(collisionGroupBox);//障碍物碰撞标识
 	box2 = PxCreateStatic(*gPhysics, PxTransform(PxVec3(-50.0f, 10.0f, -20.0f)), *boxShape1);
 	gScene->addActor(*box2);
 	box3 = PxCreateStatic(*gPhysics, PxTransform(PxVec3(50.0f, 10.0f, -20.0f)), *boxShape1);
 	gScene->addActor(*box3);
 }
+
 void createMap2() {
 	gScene->removeActor(*stick1);
 	gScene->removeActor(*stick2);
@@ -419,10 +412,12 @@ void createMap2() {
 	gScene->removeActor(*box2);
 	gScene->removeActor(*box3);
 	PxShape* capsuleShape = gPhysics->createShape(PxCapsuleGeometry(10.0f, 20.0f), *gMaterial);
+
 	//PxRigidStatic* stick0 = gPhysics->createRigidStatic(PxTransform(PxVec3(10.0f, 0.0f, -70.0f)));
 	PxTransform relativePose(PxQuat(PxHalfPi, PxVec3(0, 0, 1)));
 	capsuleShape->setLocalPose(relativePose);
-	capsuleShape->setSimulationFilterData(collisionGroupObstacle);//障碍物碰撞标识
+	capsuleShape->setSimulationFilterData(collisionGroupCapsule);//障碍物碰撞标识
+
 	//其他障碍
 	stick1 = PxCreateStatic(*gPhysics, PxTransform(PxVec3(0.0f, 0.0f, 0.0f)), *capsuleShape);
 	//stick->setRigidDynamicLockFlags(PxRigidDynamicLockFlag::eLOCK_LINEAR_Y);
@@ -439,6 +434,9 @@ void createMap2() {
 	//moveBox->setRigidBodyFlag(PxRigidBodyFlag::eKINEMATIC, true);
 	PxRigidBodyExt::updateMassAndInertia(*moveBox, 100000.0f);
 
+	PxShape* dynamicMoveBox = PxRigidActorExt::createExclusiveShape(*moveBox, PxBoxGeometry(4.0f, 4.0f, 20.0f), *gMaterial);
+	dynamicMoveBox->setSimulationFilterData(collisionGroupBox);//障碍物碰撞标识
+
 	moveBox->setRigidDynamicLockFlags(
 		PxRigidDynamicLockFlag::eLOCK_LINEAR_Y|
 		PxRigidDynamicLockFlag::eLOCK_ANGULAR_X |
@@ -451,6 +449,10 @@ void createMap2() {
 	moveBox1->setActorFlag(PxActorFlag::eDISABLE_GRAVITY, true);
 	//moveBox->setRigidBodyFlag(PxRigidBodyFlag::eKINEMATIC, true);
 	PxRigidBodyExt::updateMassAndInertia(*moveBox1, 100000.0f);
+
+	PxShape* dynamicMoveBox1 = PxRigidActorExt::createExclusiveShape(*moveBox1, PxBoxGeometry(4.0f, 4.0f, 20.0f), *gMaterial);
+	dynamicMoveBox1->setSimulationFilterData(collisionGroupBox);//障碍物碰撞标识
+
 	moveBox1->setRigidDynamicLockFlags(
 		PxRigidDynamicLockFlag::eLOCK_LINEAR_Y |
 		PxRigidDynamicLockFlag::eLOCK_ANGULAR_X |
@@ -463,6 +465,9 @@ void createMap2() {
 	moveBox2->setActorFlag(PxActorFlag::eDISABLE_GRAVITY, true);
 	//moveBox->setRigidBodyFlag(PxRigidBodyFlag::eKINEMATIC, true);
 	PxRigidBodyExt::updateMassAndInertia(*moveBox2, 10000000.0f);
+
+	PxShape* dynamicMoveBox2 = PxRigidActorExt::createExclusiveShape(*moveBox2, PxBoxGeometry(4.0f, 4.0f, 20.0f), *gMaterial);
+	dynamicMoveBox2->setSimulationFilterData(collisionGroupBox);//障碍物碰撞标识
 
 	moveBox2->setRigidDynamicLockFlags(
 		PxRigidDynamicLockFlag::eLOCK_LINEAR_Y |
@@ -480,12 +485,19 @@ void createMap3() {
 	//create_static(test_barrier, 12, PxVec3(-10, 0, -50));
 	create_static(test_barrier1, 12, PxVec3(35, 0, -50));
 	create_static(test_barrier1, 12, PxVec3(-35, 0, 0));
+
+
+
 	moveBox = createDynamic(PxTransform(PxVec3(40.0f, 4.0f, 50.0f)), PxBoxGeometry(4.0f, 4.0f, 20.0f), PxVec3(0.0f, 0.0f, 0.0f));
 	moveBox->setAngularVelocity(PxVec3(0.0f, .5f, 0.0f));
 	moveBox->setAngularDamping(0.f);
 	moveBox->setActorFlag(PxActorFlag::eDISABLE_GRAVITY, true);
 	//moveBox->setRigidBodyFlag(PxRigidBodyFlag::eKINEMATIC, true);
 	PxRigidBodyExt::updateMassAndInertia(*moveBox, 100000.0f);
+
+	PxShape* dynamicMoveBox = PxRigidActorExt::createExclusiveShape(*moveBox, PxBoxGeometry(4.0f, 4.0f, 20.0f), *gMaterial);
+	dynamicMoveBox->setSimulationFilterData(collisionGroupBox);//障碍物碰撞标识
+
 	moveBox->setRigidDynamicLockFlags(
 		PxRigidDynamicLockFlag::eLOCK_LINEAR_Y |
 		PxRigidDynamicLockFlag::eLOCK_ANGULAR_X |
@@ -495,7 +507,10 @@ void createMap3() {
 void initPhysics(bool interactive)
 {
 	//PlaySound((char*)"G:\\shixun\\PhysX-3.4-master\\PhysX-3.4-master\\PhysX_3.4\\Snippets\\SnippetHelloWorld\\music.wav", NULL, SND_ASYNC | SND_LOOP);//bgm,要绝对路径
-	PlaySound((char*)"C:\\Users\\Administrator.DESKTOP-P0ESJRB\\Desktop\\Big Project\\PhysX-3.4-master\\PhysX_3.4\\Snippets\\SnippetHelloWorld\\music.wav", NULL, SND_ASYNC | SND_LOOP);
+
+	mciSendString(("open bgm.mp3 alias MUSIC"),NULL, 0, NULL);
+	mciSendString("play MUSIC repeat", NULL, 0, NULL);
+
 	gFoundation = PxCreateFoundation(PX_FOUNDATION_VERSION, gAllocator, gErrorCallback);
 
 	gPvd = PxCreatePvd(*gFoundation);
@@ -675,8 +690,6 @@ void initPhysics(bool interactive)
 	if(!interactive)
 		createDynamic(PxTransform(PxVec3(0,40,100)), PxSphereGeometry(10), PxVec3(0,0,0.1f));
 
-	//mciSendString(L"open ./bgm.mp3 alias bgm", 0, 0, 0);//打开音乐
-	//mciSendString(L"open bgm repeat", 0, 0, 0);//播放音乐
 
 }
 
